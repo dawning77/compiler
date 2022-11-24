@@ -1,2 +1,7 @@
 # 项目排除路径
-/out/
+/out/!/src.zip
+!/mips.txt
+!/src/test.c
+!/error.txt
+!/output.txt
+!/testfile.txt
