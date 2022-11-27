@@ -113,11 +113,9 @@ public class MipsManager{
 			genInstr(new Addi(Reg.$sp, Reg.$sp, (frameSize + paramSize) * 4));
 			epilogue();
 		}
-		// if(curBB!=null&&curBB.id==22) System.out.println(regManager.curState);
 	}
 
 	public void genInstr(Instr instr){
-		curFunc.instrs.add(instr);
 		if(!(instr instanceof Label)) mips.append('\t');
 		mips.append(indent).append(instr).append('\n');
 	}

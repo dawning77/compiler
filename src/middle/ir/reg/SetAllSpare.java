@@ -7,8 +7,7 @@ import middle.ir.*;
 import java.util.*;
 
 public class SetAllSpare implements ICode{
-	public SetAllSpare(){
-	}
+	public SetAllSpare(){ }
 
 	@Override
 	public String toString(){ return "SetAllSpare"; }

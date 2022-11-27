@@ -61,8 +61,8 @@ public class Push implements ICode{
 				}
 			}
 			else if(paramSym instanceof SubMat){
-				Mat mat = ((SubMat)param).mat;
 				SubMat paramSubMat = (SubMat)paramSym;
+				Mat mat = paramSubMat.mat;
 				if(paramSubMat.idx instanceof Imm){
 					int offset = mat.innerLen * ((Imm)(paramSubMat.idx)).val;
 					switch(mat.type){

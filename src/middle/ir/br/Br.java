@@ -2,7 +2,6 @@ package middle.ir.br;
 
 import backend.mips.instr.*;
 import backend.mips.instr.jtype.*;
-import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.*;
 import middle.ir.*;
@@ -18,13 +17,13 @@ public class Br implements ICode{
 	public boolean inv;
 	public BasicBlock bb;
 
-	public Br(Operand opd0, Operand opd1, Rel rel, boolean inv, BasicBlock bb){
-		this.opd0 = opd0;
-		this.opd1 = opd1;
-		this.rel = rel;
-		this.inv = inv;
-		this.bb = bb;
-	}
+//	public Br(Operand opd0, Operand opd1, Rel rel, boolean inv, BasicBlock bb){
+//		this.opd0 = opd0;
+//		this.opd1 = opd1;
+//		this.rel = rel;
+//		this.inv = inv;
+//		this.bb = bb;
+//	}
 
 	public Br(Operand opd0, boolean inv, BasicBlock bb){
 		this.opd0 = opd0;
@@ -49,7 +48,10 @@ public class Br implements ICode{
 		if(rel == null){
 			if(opd0 instanceof Imm){
 				regManager.setAllSpare();
-				if((((Imm)opd0).val == 0) == inv) ret.add(new J(bb.toString()));
+				if((((Imm)opd0).val == 0) == inv) {
+					ret.add(new J(bb.toString()));
+					ret.add(new Nop());
+				}
 			}
 			else if(opd0 instanceof Var){
 				Reg reg = regManager.get((Var)opd0);
@@ -59,38 +61,38 @@ public class Br implements ICode{
 				ret.add(new Nop());
 			}
 		}
-		else{
-			if(opd0 instanceof Imm && opd1 instanceof Imm){
-				int val0 = ((Imm)opd0).val;
-				int val1 = ((Imm)opd1).val;
-				if(rel.satisfied(val0, val1) != inv){
-					ret.add(new J(bb.toString()));
-					ret.add(new Nop());
-				}
-				return ret;
-			}
-			Reg reg0;
-			Reg reg1;
-			if(opd0 instanceof Imm){
-				reg0 = Reg.$v1;
-				reg1 = regManager.get((Var)opd1);
-				ret.add(new Li(Reg.$v1, ((Imm)opd0).val));
-			}
-			else if(opd1 instanceof Imm){
-				reg0 = regManager.get((Var)opd0);
-				reg1 = Reg.$v1;
-				ret.add(new Li(Reg.$v1, ((Imm)opd1).val));
-			}
-			else{
-				reg0 = regManager.get((Var)opd0);
-				reg1 = regManager.get((Var)opd1);
-			}
-			ret.add(new backend.mips.instr.pseudo.Br(
-					reg0, reg1,
-					inv? rel.inverse(): rel,
-					bb.toString()));
-			ret.add(new Nop());
-		}
+//		else{
+//			if(opd0 instanceof Imm && opd1 instanceof Imm){
+//				int val0 = ((Imm)opd0).val;
+//				int val1 = ((Imm)opd1).val;
+//				if(rel.satisfied(val0, val1) != inv){
+//					ret.add(new J(bb.toString()));
+//					ret.add(new Nop());
+//				}
+//				return ret;
+//			}
+//			Reg reg0;
+//			Reg reg1;
+//			if(opd0 instanceof Imm){
+//				reg0 = Reg.$v1;
+//				reg1 = regManager.get((Var)opd1);
+//				ret.add(new Li(Reg.$v1, ((Imm)opd0).val));
+//			}
+//			else if(opd1 instanceof Imm){
+//				reg0 = regManager.get((Var)opd0);
+//				reg1 = Reg.$v1;
+//				ret.add(new Li(Reg.$v1, ((Imm)opd1).val));
+//			}
+//			else{
+//				reg0 = regManager.get((Var)opd0);
+//				reg1 = regManager.get((Var)opd1);
+//			}
+//			ret.add(new backend.mips.instr.pseudo.Br(
+//					reg0, reg1,
+//					inv? rel.inverse(): rel,
+//					bb.toString()));
+//			ret.add(new Nop());
+//		}
 		return ret;
 	}
 }

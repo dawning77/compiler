@@ -13,9 +13,7 @@ import middle.operand.symbol.*;
 import java.util.*;
 
 public class Load extends AccessMem implements ICode{
-	public Load(Symbol sym, Operand idx, Operand val){
-		super(sym, idx, val);
-	}
+	public Load(Symbol sym, Operand idx, Operand val){ super(sym, idx, val); }
 
 	@Override
 	public String toString(){ return val + " = " + sym + '[' + idx + ']'; }

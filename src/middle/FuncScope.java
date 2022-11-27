@@ -1,6 +1,5 @@
 package middle;
 
-import backend.mips.instr.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
@@ -17,8 +16,6 @@ public class FuncScope{
 	public int frameSize;
 	public int paramSize;
 
-	public final ArrayList<Instr> instrs;
-
 	public FuncScope(String name, String retType, BasicBlock firstBB){
 		this.name = name;
 		this.retType = retType;
@@ -29,7 +26,6 @@ public class FuncScope{
 		this.params = new ArrayList<>();
 		this.locals = new ArrayList<>();
 		this.tmps = new ArrayList<>();
-		this.instrs = new ArrayList<>();
 	}
 
 	public void formFrame(){
@@ -41,10 +37,9 @@ public class FuncScope{
 			local.loc = frameSize;
 			frameSize += local.size;
 		}
-		// do not contains tmpVars
 		for(Symbol param: params){
 			param.loc = frameSize + paramSize;
-			paramSize += 1;     //the size of param arr/mat is not valid
+			paramSize += 1;
 		}
 	}
 }

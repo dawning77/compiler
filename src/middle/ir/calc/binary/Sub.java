@@ -26,7 +26,6 @@ public class Sub extends Binary{
 		}
 		else if(opd0 instanceof Imm){
 			reg1 = regManager.get((Var)opd1);
-			// TODO: 2022/10/28 maybe formFrame a spare
 			ret.add(new Li(resReg, ((Imm)opd0).val));
 			ret.add(new backend.mips.instr.rtype.Sub(resReg, reg1, resReg));
 		}

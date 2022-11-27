@@ -32,7 +32,6 @@ public class SymbolTable{
 				case tmp:
 					scope.tmps.add(symbol); break;
 				case local:
-					System.out.println(symbol.name);
 					scope.locals.add(symbol); break;
 				case param:
 					scope.params.add(symbol); break;

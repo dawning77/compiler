@@ -101,12 +101,14 @@ public class ICodeManager{
 		return strCnt++;
 	}
 
+	// CompUnit → {Decl} {FuncDef} MainFuncDef
 	public void analyseCompUnit(CompUnit compUnit){
 		compUnit.decls.forEach(this::analyseDecl);
 		compUnit.funcDefs.forEach(this::analyseFuncDef);
 		analyseMainFuncDef(compUnit.mainFuncDef);
 	}
 
+	// Decl → ConstDecl | VarDecl
 	private void analyseDecl(Decl decl){
 		if(decl instanceof VarDecl){ analyseVarDecl((VarDecl)decl); }
 		else if(decl instanceof ConstDecl){
@@ -114,10 +116,12 @@ public class ICodeManager{
 		}
 	}
 
+	// ConstDecl → 'const' BType ConstDef { ',' ConstDef } ';'
 	private void analyseConstDecl(ConstDecl constDecl){
 		constDecl.constDefs.forEach(this::analyseConstDef);
 	}
 
+	// ConstDef → Ident { '[' ConstExp ']' } '=' ConstInitVal
 	private void analyseConstDef(ConstDef constDef){
 		String name = constDef.ident.val;
 		String newName = name + "_c" + curST.id;
@@ -157,7 +161,6 @@ public class ICodeManager{
 					globalVars.put(sym, info);
 				}
 				else{
-					curBlock.add(new CreatePtr(sym, len));
 					for(int i = 0; i < constDef.constInitVal.constInitVals.size(); i++){
 						int val = calc.calc(constDef.constInitVal.constInitVals.get(i).constExp);
 						curBlock.add(new Store(sym, new Imm(i), new Imm(val)));
@@ -177,7 +180,7 @@ public class ICodeManager{
 						if(innerInitVal != null && j < innerInitVal.constInitVals.size()){
 							valss.get(i).add(calc.calc(innerInitVal.constInitVals.get(j).constExp));
 						}
-						else valss.get(i).add(0);
+						else valss.get(i).add(0);   // default value is 0
 					}
 				}
 				sym = new ConstMat(newName, isGlobal? global: local, innerLen, outerLen, valss);
@@ -195,7 +198,6 @@ public class ICodeManager{
 					globalVars.put(sym, info);
 				}
 				else{
-					curBlock.add(new CreatePtr(sym, sym.size));
 					for(int i = 0; i < constDef.constInitVal.constInitVals.size(); i++){
 						ConstInitVal innerInitVal = constDef.constInitVal.constInitVals.get(i);
 						for(int j = 0; j < innerInitVal.constInitVals.size(); j++){
@@ -211,8 +213,10 @@ public class ICodeManager{
 		curST.put(name, sym);
 	}
 
+	// VarDecl → BType VarDef { ',' VarDef } ';'
 	private void analyseVarDecl(VarDecl varDecl){ varDecl.varDefs.forEach(this::analyseVarDef); }
 
+	// VarDef → Ident { '[' ConstExp ']' } | Ident { '[' ConstExp ']' } '=' InitVal
 	private void analyseVarDef(VarDef varDef){
 		String name = varDef.ident.val;
 		String newName = name + "_v" + curST.id;
@@ -248,7 +252,8 @@ public class ICodeManager{
 						ArrayList<Integer> vals = new ArrayList<>();
 						for(int i = 0; i < len; i++){
 							int val = 0;
-							if(i < varDef.initVal.initVals.size()) val = calc.calc(varDef.initVal.initVals.get(i).exp);
+							if(i < varDef.initVal.initVals.size())
+								val = calc.calc(varDef.initVal.initVals.get(i).exp);
 							vals.add(val);
 						}
 						info = new GlobalVarInfo(len, vals);
@@ -257,7 +262,6 @@ public class ICodeManager{
 					globalVars.put(sym, info);
 				}
 				else{
-					curBlock.add(new CreatePtr(sym, len));
 					if(varDef.initVal != null){
 						for(int i = 0; i < varDef.initVal.initVals.size(); i++){
 							Operand val = analyseExp(varDef.initVal.initVals.get(i).exp);
@@ -291,7 +295,6 @@ public class ICodeManager{
 					globalVars.put(sym, info);
 				}
 				else{
-					curBlock.add(new CreatePtr(sym, sym.size));
 					if(varDef.initVal != null){
 						for(int i = 0; i < varDef.initVal.initVals.size(); i++){
 							InitVal innerInitVal = varDef.initVal.initVals.get(i);
@@ -309,6 +312,7 @@ public class ICodeManager{
 		curST.put(name, sym);
 	}
 
+	// FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
 	private void analyseFuncDef(FuncDef funcDef){
 		curBlock = genNewBlock();
 		genNewFunc(funcDef.ident.val,
@@ -318,6 +322,7 @@ public class ICodeManager{
 		funcs.add(curFunc);
 	}
 
+	// MainFuncDef → 'int' 'main' '(' ')' Block
 	private void analyseMainFuncDef(MainFuncDef mainFuncDef){
 		curBlock = genNewBlock();
 		genNewFunc("main",
@@ -337,6 +342,7 @@ public class ICodeManager{
 		curFunc.formFrame();
 	}
 
+	// FuncFParams → FuncFParam { ',' FuncFParam }
 	private LinkedHashMap<String, Symbol> analyseFuncFParams(FuncFParams funcFParams){
 		LinkedHashMap<String, Symbol> paramNameMap = new LinkedHashMap<>();
 		ArrayList<Symbol> params = new ArrayList<>();
@@ -375,12 +381,14 @@ public class ICodeManager{
 		curST = curST.parent;
 	}
 
+	// Block → '{' { BlockItem } '}'
 	private void analyseBlock(Block block){
 		curST = new SymbolTable(tableCnt++, curST);
 		block.blockItems.forEach(this::analyseBlockItem);
 		curST = curST.parent;
 	}
 
+	// BlockItem → Decl | Stmt
 	private void analyseBlockItem(BlockItem blockItem){
 		if(blockItem instanceof Decl){ analyseDecl((Decl)blockItem); }
 		else if(blockItem instanceof Stmt){
@@ -388,6 +396,13 @@ public class ICodeManager{
 		}
 	}
 
+	/*
+	Stmt → LVal '=' Exp ';' | [Exp] ';'
+	| Block | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+	| 'while' '(' Cond ')' Stmt | 'break' ';' | 'continue' ';'
+	| 'return' [Exp] ';' | LVal '=' 'getint''('')'';'
+	| 'printf''('FormatString{','Exp}')'';'
+	*/
 	private void analyseStmt(Stmt stmt){
 		switch(stmt.type){
 			case "assign":
@@ -451,6 +466,7 @@ public class ICodeManager{
 		analyseLVal(s.lVal, val, "store");
 	}
 
+	// LVal → Ident {'[' Exp ']'}
 	private Operand analyseLVal(LVal lVal, Operand val, String mode){
 		String name = lVal.ident.val;
 		Symbol sym = curST.get(name);
@@ -540,6 +556,7 @@ public class ICodeManager{
 		return res;
 	}
 
+	// PrimaryExp → '(' Exp ')' | LVal | Number
 	private Operand analysePrimaryExp(PrimaryExp primaryExp){
 		if(primaryExp.exp != null) return analyseExp(primaryExp.exp);
 		else if(primaryExp.lVal != null) return analyseLVal(primaryExp.lVal, null, "load");
@@ -547,6 +564,8 @@ public class ICodeManager{
 		return null;
 	}
 
+	// UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
+	// UnaryOp → '+' | '−' | '!'
 	private Operand analyseUnaryExp(UnaryExp unaryExp){
 		if(unaryExp.primaryExp != null){ return analysePrimaryExp(unaryExp.primaryExp); }
 		else if(unaryExp.unaryOp != null){
@@ -610,6 +629,7 @@ public class ICodeManager{
 		return null;
 	}
 
+	// FuncRParams → Exp { ',' Exp }
 	private void analyseFuncRParams(FuncRParams funcRParams){
 		ArrayList<Operand> params = new ArrayList<>();
 		if(funcRParams != null){
@@ -621,6 +641,7 @@ public class ICodeManager{
 		curBlock.add(new Push(params));
 	}
 
+	// MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
 	private Operand analyseMulExp(MulExp mulExp){
 		Operand opd0 = analyseUnaryExp(mulExp.unaryExps.get(0));
 		Operand opd1;
@@ -645,6 +666,7 @@ public class ICodeManager{
 		return res;
 	}
 
+	// AddExp → MulExp | AddExp ('+' | '−') MulExp
 	private Operand analyseAddExp(AddExp addExp){
 		Operand opd0 = analyseMulExp(addExp.mulExps.get(0));
 		Operand opd1;
@@ -725,6 +747,7 @@ public class ICodeManager{
 		analyseLOrExp((LOrExp)cond, toIf, ifB, elseB);
 	}
 
+	// LOrExp → LAndExp | LOrExp '||' LAndExp
 	private void analyseLOrExp(LOrExp lOrExp, boolean toIf, BasicBlock ifB, BasicBlock elseB){
 		for(int i = 0; i < lOrExp.lAndExps.size(); i++){
 			BasicBlock nextB = i != lOrExp.lAndExps.size() - 1? genNewBlock(): elseB;
@@ -734,6 +757,7 @@ public class ICodeManager{
 		}
 	}
 
+	// LAndExp → EqExp | LAndExp '&&' EqExp
 	private void analyseLAndExp(LAndExp lAndExp, boolean toIf, BasicBlock ifB, BasicBlock elseB){
 		for(int i = 0; i < lAndExp.eqExps.size(); i++){
 			Operand cond = analyseEqExp(lAndExp.eqExps.get(i));
@@ -754,6 +778,7 @@ public class ICodeManager{
 		put(NEQ, Rel.ne);
 	}};
 
+	// EqExp → RelExp | EqExp ('==' | '!=') RelExp
 	private Operand analyseEqExp(EqExp eqExp){
 		Operand opd0 = analyseRelExp(eqExp.relExps.get(0));
 		Operand opd1;
@@ -768,6 +793,7 @@ public class ICodeManager{
 		return res;
 	}
 
+	// RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
 	private Operand analyseRelExp(RelExp relExp){
 		Operand opd0 = analyseAddExp(relExp.addExps.get(0));
 		Operand opd1;
@@ -782,6 +808,7 @@ public class ICodeManager{
 		return res;
 	}
 
+	// Exp → AddExp
 	private Operand analyseExp(Exp exp){ return analyseAddExp((AddExp)exp); }
 
 	private class Calculator{

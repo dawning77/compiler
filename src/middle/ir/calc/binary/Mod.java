@@ -25,18 +25,24 @@ public class Mod extends Binary{
 			ret.add(new Li(resReg, val));
 		}
 		else if(opd0 instanceof Imm){
+			int val0 = ((Imm)opd0).val;
 			reg1 = regManager.get((Var)opd1);
-			// TODO: 2022/10/28 maybe formFrame a spare
-			ret.add(new Li(resReg, ((Imm)opd0).val));
-			ret.add(new backend.mips.instr.itype.Div(resReg, reg1));
-			ret.add(new Mfhi(resReg));
+			if(val0 == 0) ret.add(new Li(resReg, 0));
+			else{
+				ret.add(new Li(resReg, ((Imm)opd0).val));
+				ret.add(new backend.mips.instr.itype.Div(resReg, reg1));
+				ret.add(new Mfhi(resReg));
+			}
 		}
 		else if(opd1 instanceof Imm){
+			int val1 = ((Imm)opd1).val;
 			reg0 = regManager.get((Var)opd0);
-			// TODO: 2022/10/28 maybe formFrame a spare
-			ret.add(new Li(resReg, ((Imm)opd1).val));
-			ret.add(new backend.mips.instr.itype.Div(reg0, resReg));
-			ret.add(new Mfhi(resReg));
+			if(val1 == 1)ret.add(new Li(resReg, 0));
+			else{
+				ret.add(new Li(resReg, ((Imm)opd1).val));
+				ret.add(new backend.mips.instr.itype.Div(reg0, resReg));
+				ret.add(new Mfhi(resReg));
+			}
 		}
 		else{
 			reg0 = regManager.get((Var)opd0);

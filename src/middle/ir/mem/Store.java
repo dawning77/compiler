@@ -2,6 +2,7 @@ package middle.ir.mem;
 
 import backend.mips.instr.*;
 import backend.mips.instr.itype.*;
+import backend.mips.instr.itype.Sw;
 import backend.mips.instr.pseudo.*;
 import backend.mips.instr.rtype.*;
 import backend.mips.reg.*;
@@ -31,14 +32,14 @@ public class Store extends AccessMem implements ICode{
 		switch(sym.type){
 			case local:
 				if(idx instanceof Imm)
-					ret.add(new backend.mips.instr.itype.Sw(Reg.$fp, valReg, (sym.loc + ((Imm)idx).val) * 4));
+					ret.add(new Sw(Reg.$fp, valReg, (sym.loc + ((Imm)idx).val) * 4));
 				else if(idx instanceof Var){
 					Reg idxReg = regManager.get((Symbol)idx);
 					ret.add(new Move(Reg.$v1, idxReg));
 					ret.add(new Sll(Reg.$v1, Reg.$v1, 2));
 					ret.add(new Addi(Reg.$v1, Reg.$v1, sym.loc * 4));
 					ret.add(new Add(Reg.$v1, Reg.$fp, Reg.$v1));
-					ret.add(new backend.mips.instr.itype.Sw(Reg.$v1, valReg, 0));
+					ret.add(new Sw(Reg.$v1, valReg, 0));
 				}
 				break;
 			case global:
@@ -54,14 +55,14 @@ public class Store extends AccessMem implements ICode{
 			case param:
 				Reg addr = regManager.get(sym);
 				if(idx instanceof Imm){
-					ret.add(new backend.mips.instr.itype.Sw(addr, valReg, ((Imm)idx).val * 4));
+					ret.add(new Sw(addr, valReg, ((Imm)idx).val * 4));
 				}
 				else if(idx instanceof Var){
 					Reg idxReg = regManager.get((Symbol)idx);
 					ret.add(new Move(Reg.$v1, idxReg));
 					ret.add(new Sll(Reg.$v1, Reg.$v1, 2));
 					ret.add(new Add(Reg.$v1, addr, Reg.$v1));
-					ret.add(new backend.mips.instr.itype.Sw(Reg.$v1, valReg, 0));
+					ret.add(new Sw(Reg.$v1, valReg, 0));
 				}
 				break;
 			default:
