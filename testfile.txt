@@ -1,0 +1,6 @@
+int main(){
+	int b = 1000;
+	int a = b/9;
+	printf("%d",a);
+	return 0;
+} 

@@ -55,7 +55,6 @@ public class MipsManager{
 		genStrs();
 		mips.append("\n.text\n")
 				.append(new Jal("main")).append('\n')
-				.append(new Nop()).append('\n')
 				.append(new Li(Reg.$v0, 10)).append('\n')
 				.append(new Syscall()).append("\n\n");
 		indent = "";

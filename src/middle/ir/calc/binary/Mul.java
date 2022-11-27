@@ -30,7 +30,7 @@ public class Mul extends Binary{
 			reg1 = regManager.get((Var)opd1);
 			if(val0 == 0) ret.add(new Li(resReg, 0));
 			else if(val0 == 1) ret.add(new Move(resReg, reg1));
-			else if(Utils.isPowerOf2(val0)) ret.add(new Sll(reg1, resReg, Utils.log2(val0)));
+			else if(Utils.isPowerOf2(val0)) ret.add(new Sll(reg1, resReg, Utils.log2I(val0)));
 			else ret.add(new backend.mips.instr.itype.Mul(reg1, resReg, val0));
 		}
 		else if(opd1 instanceof Imm){
@@ -38,7 +38,7 @@ public class Mul extends Binary{
 			reg0 = regManager.get((Var)opd0);
 			if(val1 == 0) ret.add(new Li(resReg, 0));
 			else if(val1 == 1) ret.add(new Move(resReg, reg0));
-			else if(Utils.isPowerOf2(val1)) ret.add(new Sll(reg0, resReg, Utils.log2(val1)));
+			else if(Utils.isPowerOf2(val1)) ret.add(new Sll(reg0, resReg, Utils.log2I(val1)));
 			else ret.add(new backend.mips.instr.itype.Mul(reg0, resReg, val1));
 		}
 		else{

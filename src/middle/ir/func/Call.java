@@ -21,7 +21,6 @@ public class Call implements ICode{
 	public ArrayList<Instr> toInstr(RegManager regManager){
 		ArrayList<Instr> ret = new ArrayList<>();
 		ret.add(new Jal(funcName));
-		ret.add(new Nop());
 		return ret;
 	}
 }

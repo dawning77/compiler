@@ -5,3 +5,4 @@
 !/error.txt
 !/output.txt
 !/testfile.txt
+!*.class

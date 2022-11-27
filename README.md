@@ -1,1 +1,1 @@
-# a sysY to mips compiler
+# a SysY to MIPS compiler
