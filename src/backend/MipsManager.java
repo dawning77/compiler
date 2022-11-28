@@ -9,6 +9,7 @@ import backend.mips.instr.jtype.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.*;
+import middle.func.*;
 import middle.ir.*;
 import middle.ir.func.*;
 import middle.operand.symbol.*;

@@ -3,7 +3,7 @@ package middle.ir.br;
 import backend.mips.instr.*;
 import backend.mips.instr.jtype.*;
 import backend.mips.reg.*;
-import middle.*;
+import middle.func.*;
 import middle.ir.*;
 
 import java.util.*;

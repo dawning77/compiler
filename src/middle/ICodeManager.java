@@ -2,6 +2,7 @@ package middle;
 
 import frontend.nodes.*;
 import frontend.token.TokenType;
+import middle.func.*;
 import middle.ir.*;
 import middle.ir.Label;
 import middle.ir.br.Br;
@@ -51,6 +52,7 @@ public class ICodeManager{
 
 	private final Stack<BasicBlock> loopFollows;
 	private final Stack<BasicBlock> loopConds;
+	private boolean needAllSpare;
 
 	private final Calculator calc;
 
@@ -70,6 +72,7 @@ public class ICodeManager{
 		curST = new SymbolTable(tableCnt++, null);
 		loopFollows = new Stack<>();
 		loopConds = new Stack<>();
+		needAllSpare = false;
 		calc = new Calculator();
 	}
 
@@ -93,6 +96,14 @@ public class ICodeManager{
 	private void changeCurBlock(BasicBlock follow){
 		curBlock.follow = follow;
 		curBlock = follow;
+	}
+
+	private void addICode(ICode icode){
+		if(needAllSpare){
+			curBlock.add(new SetAllSpare());
+			needAllSpare = false;
+		}
+		curBlock.add(icode);
 	}
 
 	private int addStr(String str){
@@ -140,7 +151,7 @@ public class ICodeManager{
 				}
 				else{
 					int initVal = calc.calc(constDef.constInitVal.constExp);
-					curBlock.add(new Assign(sym, new Imm(initVal)));
+					addICode(new Assign(sym, new Imm(initVal)));
 				}
 				break;
 			case 1:
@@ -163,7 +174,7 @@ public class ICodeManager{
 				else{
 					for(int i = 0; i < constDef.constInitVal.constInitVals.size(); i++){
 						int val = calc.calc(constDef.constInitVal.constInitVals.get(i).constExp);
-						curBlock.add(new Store(sym, new Imm(i), new Imm(val)));
+						addICode(new Store(sym, new Imm(i), new Imm(val)));
 					}
 				}
 				break;
@@ -202,7 +213,7 @@ public class ICodeManager{
 						ConstInitVal innerInitVal = constDef.constInitVal.constInitVals.get(i);
 						for(int j = 0; j < innerInitVal.constInitVals.size(); j++){
 							int val = calc.calc(innerInitVal.constInitVals.get(j).constExp);
-							curBlock.add(new Store(sym, new Imm(i * innerLen + j), new Imm(val)));
+							addICode(new Store(sym, new Imm(i * innerLen + j), new Imm(val)));
 						}
 					}
 				}
@@ -239,7 +250,7 @@ public class ICodeManager{
 				else{
 					if(varDef.initVal != null){
 						Operand initVal = analyseExp(varDef.initVal.exp);
-						curBlock.add(new Assign(sym, initVal));
+						addICode(new Assign(sym, initVal));
 					}
 				}
 				break;
@@ -265,7 +276,7 @@ public class ICodeManager{
 					if(varDef.initVal != null){
 						for(int i = 0; i < varDef.initVal.initVals.size(); i++){
 							Operand val = analyseExp(varDef.initVal.initVals.get(i).exp);
-							curBlock.add(new Store(sym, new Imm(i), val));
+							addICode(new Store(sym, new Imm(i), val));
 						}
 					}
 				}
@@ -300,7 +311,7 @@ public class ICodeManager{
 							InitVal innerInitVal = varDef.initVal.initVals.get(i);
 							for(int j = 0; j < innerInitVal.initVals.size(); j++){
 								Operand val = analyseExp(innerInitVal.initVals.get(j).exp);
-								curBlock.add(new Store(sym, new Imm(i * innerLen + j), val));
+								addICode(new Store(sym, new Imm(i * innerLen + j), val));
 							}
 						}
 					}
@@ -337,8 +348,11 @@ public class ICodeManager{
 		curFunc = new FuncScope(funcName, retType, curBlock);
 		funcNameMap.put(funcName, curFunc);
 		isGlobal = false;
+		needAllSpare = false;
 		analyseFuncBody(funcBody, funcFParams);
-		if(!curFunc.hasLastReturn) curBlock.add(new Ret(null));
+		if(!curFunc.hasLastReturn) addICode(new Ret(null));
+		needAllSpare = false;
+		curFunc.deleteEmptyBlock();
 		curFunc.formFrame();
 	}
 
@@ -367,7 +381,7 @@ public class ICodeManager{
 				params.add(sym);
 			});
 		}
-		curBlock.add(new ParamDecl(params));
+		addICode(new ParamDecl(params));
 		return paramNameMap;
 	}
 
@@ -427,7 +441,7 @@ public class ICodeManager{
 			case "printf":
 				analysePrintf(stmt); break;
 			case "tag":
-				curBlock.add(new Label("################################" + stmt.tag)); break;
+				addICode(new Label("################################" + stmt.tag)); break;
 			default:
 				break;
 		}
@@ -436,7 +450,7 @@ public class ICodeManager{
 	private void analyseReturn(Stmt s){
 		Operand res = null;
 		if(s.exp != null) res = analyseExp(s.exp);
-		curBlock.add(new Ret(res));
+		addICode(new Ret(res));
 	}
 
 	private void analysePrintf(Stmt s){
@@ -452,7 +466,7 @@ public class ICodeManager{
 				outputList.add(new OutputStr(strId));
 			}
 		}
-		outputList.forEach(out->curBlock.add(out));
+		outputList.forEach(this::addICode);
 	}
 
 	private void analyseAssign(Stmt s){
@@ -462,7 +476,7 @@ public class ICodeManager{
 
 	private void analyseGetint(Stmt s){
 		Var val = genNewTmp();
-		curBlock.add(new Input(val));
+		addICode(new Input(val));
 		analyseLVal(s.lVal, val, "store");
 	}
 
@@ -478,7 +492,7 @@ public class ICodeManager{
 		switch(dim){
 			case 0:
 				if(mode.equals("store")){
-					curBlock.add(new Assign(sym, val));
+					addICode(new Assign(sym, val));
 				}
 				else if(mode.equals("load")){
 					if(isConst) res = new Imm(((ConstVar)sym).val);
@@ -493,13 +507,13 @@ public class ICodeManager{
 					case 1:
 						// get value
 						Operand idx = analyseExp(lVal.exps.get(0));
-						if(mode.equals("store")) curBlock.add(new Store(sym, idx, val));
+						if(mode.equals("store")) addICode(new Store(sym, idx, val));
 						else if(mode.equals("load")){
 							if(isConst && idx instanceof Imm)
 								res = new Imm(((ConstArr)sym).vals.get(((Imm)idx).val));
 							else{
 								res = genNewTmp();
-								curBlock.add(new Load(sym, idx, res));
+								addICode(new Load(sym, idx, res));
 							}
 						}
 						break;
@@ -526,23 +540,23 @@ public class ICodeManager{
 							idxx = new Imm(((Imm)outerIdx).val * innerLen + ((Imm)innerIdx).val);
 						else if(outerIdx instanceof Imm){
 							Var tmp = genNewTmp();
-							curBlock.add(new Add(new Imm(((Imm)outerIdx).val * innerLen), innerIdx, tmp));
+							addICode(new Add(new Imm(((Imm)outerIdx).val * innerLen), innerIdx, tmp));
 							idxx = tmp;
 						}
 						else{
 							Var tmp1 = genNewTmp();
 							Var tmp2 = genNewTmp();
-							curBlock.add(new Mul(outerIdx, new Imm(innerLen), tmp1));
-							curBlock.add(new Add(tmp1, innerIdx, tmp2));
+							addICode(new Mul(outerIdx, new Imm(innerLen), tmp1));
+							addICode(new Add(tmp1, innerIdx, tmp2));
 							idxx = tmp2;
 						}
-						if(mode.equals("store")) curBlock.add(new Store(sym, idxx, val));
+						if(mode.equals("store")) addICode(new Store(sym, idxx, val));
 						else if(mode.equals("load")){
 							if(isConst && outerIdx instanceof Imm && innerIdx instanceof Imm)
 								res = new Imm(((ConstMat)sym).vals.get(((Imm)outerIdx).val).get(((Imm)innerIdx).val));
 							else{
 								res = genNewTmp();
-								curBlock.add(new Load(sym, idxx, res));
+								addICode(new Load(sym, idxx, res));
 							}
 						}
 						break;
@@ -585,7 +599,7 @@ public class ICodeManager{
 				else{
 					if(notCnt % 2 == 1){
 						Operand res = genNewTmp();
-						curBlock.add(new Not(core, res));
+						addICode(new Not(core, res));
 						return res;
 					}
 					else return core;
@@ -606,7 +620,7 @@ public class ICodeManager{
 				else{
 					if(negCnt % 2 == 1){
 						Operand res = genNewTmp();
-						curBlock.add(new Sub(new Imm(0), core, res));
+						addICode(new Sub(new Imm(0), core, res));
 						return res;
 					}
 					else return core;
@@ -617,11 +631,11 @@ public class ICodeManager{
 			BasicBlock follow = genNewBlock();
 			String name = unaryExp.ident.val;
 			analyseFuncRParams(unaryExp.funcRParams);
-			curBlock.add(new Call(unaryExp.ident.val));
+			addICode(new Call(unaryExp.ident.val));
 			changeCurBlock(follow);
 			if(funcNameMap.containsKey(name) && funcNameMap.get(name).retType.equals("int")){
 				Operand res = genNewTmp();
-				curBlock.add(new GetRet(res));
+				addICode(new GetRet(res));
 				return res;
 			}
 			else return null;
@@ -638,7 +652,7 @@ public class ICodeManager{
 				params.add(param);
 			}
 		}
-		curBlock.add(new Push(params));
+		addICode(new Push(params));
 	}
 
 	// MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
@@ -660,7 +674,7 @@ public class ICodeManager{
 				default:
 					iCode = null;
 			}
-			curBlock.add(iCode);
+			addICode(iCode);
 			opd0 = res;
 		}
 		return res;
@@ -685,7 +699,7 @@ public class ICodeManager{
 				default:
 					iCode = null;
 			}
-			curBlock.add(iCode);
+			addICode(iCode);
 			opd0 = res;
 		}
 		return res;
@@ -699,17 +713,17 @@ public class ICodeManager{
 			analyseCond(s.cond, false, ifBody, ifFollow);
 			changeCurBlock(ifBody);
 			analyseStmt(s.stmt1);
-			curBlock.add(new SetAllSpare());
+			needAllSpare = true;
 			changeCurBlock(ifFollow);
 		}
 		else{
 			analyseCond(s.cond, false, ifBody, elseBody);
 			changeCurBlock(ifBody);
 			analyseStmt(s.stmt1);
-			curBlock.add(new Jmp(ifFollow));
+			addICode(new Jmp(ifFollow));
 			changeCurBlock(elseBody);
 			analyseStmt(s.stmt2);
-			curBlock.add(new SetAllSpare());
+			needAllSpare = true;
 			changeCurBlock(ifFollow);
 		}
 	}
@@ -723,7 +737,7 @@ public class ICodeManager{
 		loopConds.push(loopCond);
 		loopFollows.push(loopFollow);
 		analyseStmt(s.stmt1);
-		curBlock.add(new SetAllSpare());
+		needAllSpare = true;
 		loopFollows.pop();
 		loopConds.pop();
 		changeCurBlock(loopCond);
@@ -732,12 +746,12 @@ public class ICodeManager{
 	}
 
 	private void analyseBreak(){
-		curBlock.add(new Jmp(loopFollows.peek()));
+		addICode(new Jmp(loopFollows.peek()));
 		changeCurBlock(genNewBlock());
 	}
 
 	private void analyseContinue(){
-		curBlock.add(new Jmp(loopConds.peek()));
+		addICode(new Jmp(loopConds.peek()));
 		changeCurBlock(genNewBlock());
 	}
 
@@ -764,7 +778,7 @@ public class ICodeManager{
 			Br br;
 			if(toIf && i == lAndExp.eqExps.size() - 1) br = new Br(cond, false, ifB);
 			else br = new Br(cond, true, elseB);
-			curBlock.add(br);
+			addICode(br);
 			if(i != lAndExp.eqExps.size() - 1) changeCurBlock(genNewBlock());
 		}
 	}
@@ -787,7 +801,7 @@ public class ICodeManager{
 			opd1 = analyseRelExp(eqExp.relExps.get(i));
 			res = genNewTmp();
 			Rel rel = relMap.get(eqExp.ops.get(i - 1));
-			curBlock.add(new Compare(opd0, opd1, res, rel));
+			addICode(new Compare(opd0, opd1, res, rel));
 			opd0 = res;
 		}
 		return res;
@@ -802,7 +816,7 @@ public class ICodeManager{
 			opd1 = analyseAddExp(relExp.addExps.get(i));
 			res = genNewTmp();
 			Rel rel = relMap.get(relExp.ops.get(i - 1));
-			curBlock.add(new Compare(opd0, opd1, res, rel));
+			addICode(new Compare(opd0, opd1, res, rel));
 			opd0 = res;
 		}
 		return res;

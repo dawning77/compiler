@@ -1,6 +1,17 @@
+void a(){
+    int t = 2;
+    if(t){
+
+    }
+}
 int main(){
 	int b = 1000;
-	int a = b/9;
-	printf("%d",a);
+	if(1){
+
+	}else {
+	    if(2){
+
+	    }
+	}
 	return 0;
 } 

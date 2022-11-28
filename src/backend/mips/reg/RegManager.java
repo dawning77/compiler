@@ -2,7 +2,7 @@ package backend.mips.reg;
 
 import backend.*;
 import backend.mips.instr.itype.*;
-import middle.*;
+import middle.func.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
