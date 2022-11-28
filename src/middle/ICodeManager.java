@@ -40,6 +40,7 @@ public class ICodeManager{
 	public FuncScope mainFunc;
 	public final HashMap<String, Integer> strs;
 	public final HashMap<Symbol, GlobalVarInfo> globalVars;
+	private final StringBuilder iCodes;
 
 	private int blockCnt;
 	private int strCnt;
@@ -52,11 +53,11 @@ public class ICodeManager{
 
 	private final Stack<BasicBlock> loopFollows;
 	private final Stack<BasicBlock> loopConds;
-	private boolean needAllSpare;
 
 	private final Calculator calc;
 
 	public ICodeManager(){
+		iCodes = new StringBuilder();
 		funcNameMap = new HashMap<>();
 		funcs = new ArrayList<>();
 		mainFunc = null;
@@ -72,7 +73,6 @@ public class ICodeManager{
 		curST = new SymbolTable(tableCnt++, null);
 		loopFollows = new Stack<>();
 		loopConds = new Stack<>();
-		needAllSpare = false;
 		calc = new Calculator();
 	}
 
@@ -93,18 +93,33 @@ public class ICodeManager{
 		return bb;
 	}
 
+	private void genLink(BasicBlock prev, BasicBlock next){
+		prev.next.add(next);
+		next.prev.add(prev);
+	}
+
 	private void changeCurBlock(BasicBlock follow){
-		curBlock.follow = follow;
+		curFunc.bbs.add(follow);
+		// process next and prev
+		if(curBlock.iCodes.size() == 0) genLink(curBlock, follow);
+		else{
+			ICode last = curBlock.iCodes.get(curBlock.iCodes.size() - 1);
+			if(last instanceof Jmp) genLink(curBlock, ((Jmp)last).bb);
+			else if(last instanceof Br){
+				genLink(curBlock, follow);
+				genLink(curBlock, ((Br)last).bb);
+			}
+			else genLink(curBlock, follow);
+		}
 		curBlock = follow;
 	}
 
 	private void addICode(ICode icode){
-		if(needAllSpare){
-			curBlock.add(new SetAllSpare());
-			needAllSpare = false;
-		}
 		curBlock.add(icode);
+		iCodes.append(icode).append('\n');
 	}
+
+	public String getICodes(){ return iCodes.toString(); }
 
 	private int addStr(String str){
 		if(strs.containsKey(str)) return strs.get(str);
@@ -345,14 +360,13 @@ public class ICodeManager{
 
 	private void genNewFunc(String funcName, String retType, LinkedHashMap<String, Symbol> funcFParams,
 			Block funcBody){
-		curFunc = new FuncScope(funcName, retType, curBlock);
+		curFunc = new FuncScope(funcName, retType);
+		curFunc.bbs.add(curBlock);
 		funcNameMap.put(funcName, curFunc);
 		isGlobal = false;
-		needAllSpare = false;
 		analyseFuncBody(funcBody, funcFParams);
 		if(!curFunc.hasLastReturn) addICode(new Ret(null));
-		needAllSpare = false;
-		curFunc.deleteEmptyBlock();
+		iCodes.append('\n');
 		curFunc.formFrame();
 	}
 
@@ -628,11 +642,12 @@ public class ICodeManager{
 			}
 		}
 		else if(unaryExp.ident != null){
-			BasicBlock follow = genNewBlock();
+			// do not change block in function call
+			//			BasicBlock follow = genNewBlock();
 			String name = unaryExp.ident.val;
 			analyseFuncRParams(unaryExp.funcRParams);
 			addICode(new Call(unaryExp.ident.val));
-			changeCurBlock(follow);
+			//			changeCurBlock(follow);
 			if(funcNameMap.containsKey(name) && funcNameMap.get(name).retType.equals("int")){
 				Operand res = genNewTmp();
 				addICode(new GetRet(res));
@@ -713,7 +728,7 @@ public class ICodeManager{
 			analyseCond(s.cond, false, ifBody, ifFollow);
 			changeCurBlock(ifBody);
 			analyseStmt(s.stmt1);
-			needAllSpare = true;
+			addICode(new SetAllSpare());
 			changeCurBlock(ifFollow);
 		}
 		else{
@@ -723,7 +738,7 @@ public class ICodeManager{
 			addICode(new Jmp(ifFollow));
 			changeCurBlock(elseBody);
 			analyseStmt(s.stmt2);
-			needAllSpare = true;
+			addICode(new SetAllSpare());
 			changeCurBlock(ifFollow);
 		}
 	}
@@ -737,7 +752,7 @@ public class ICodeManager{
 		loopConds.push(loopCond);
 		loopFollows.push(loopFollow);
 		analyseStmt(s.stmt1);
-		needAllSpare = true;
+		addICode(new SetAllSpare());
 		loopFollows.pop();
 		loopConds.pop();
 		changeCurBlock(loopCond);

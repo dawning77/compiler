@@ -11,25 +11,25 @@ import middle.operand.symbol.*;
 import java.util.*;
 
 public class Ret implements ICode{
-	public Operand res;
+	public Operand opd0;
 
-	public Ret(Operand res){
-		this.res = res;
+	public Ret(Operand opd0){
+		this.opd0 = opd0;
 	}
 
 	@Override
-	public String toString(){ return "Ret " + res; }
+	public String toString(){ return "Ret " + opd0; }
 
 	@Override
 	public ArrayList<Instr> toInstr(RegManager regManager){
 		ArrayList<Instr> ret = new ArrayList<>();
 		regManager.setAllGlobalSpare();
-		if(res != null){
-			if(res instanceof Imm){
-				ret.add(new Li(Reg.$v0, ((Imm)res).val));
+		if(opd0 != null){
+			if(opd0 instanceof Imm){
+				ret.add(new Li(Reg.$v0, ((Imm)opd0).val));
 			}
-			else if(res instanceof Var){
-				Reg reg = regManager.get((Var)res);
+			else if(opd0 instanceof Var){
+				Reg reg = regManager.get((Var)opd0);
 				ret.add(new Move(Reg.$v0, reg));
 			}
 		}

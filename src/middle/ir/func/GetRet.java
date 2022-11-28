@@ -1,9 +1,7 @@
 package middle.ir.func;
 
 import backend.mips.instr.*;
-import backend.mips.instr.itype.*;
 import backend.mips.instr.pseudo.*;
-import backend.mips.instr.rtype.*;
 import backend.mips.reg.*;
 import middle.ir.*;
 import middle.operand.Operand;

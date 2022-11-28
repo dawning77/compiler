@@ -24,9 +24,7 @@ public class ParamDecl implements ICode{
 				Reg src = Reg.valueOf("$a" + i);
 				regManager.setUsed(src, param);
 			}
-			else{
-				regManager.curState.inStack.add(param);
-			}
+			else regManager.curState.inStack.add(param);
 		}
 		return ret;
 	}

@@ -6,25 +6,25 @@ li $v0, 10
 syscall
 
 main:
-	addi $sp, $sp, -4
-	move $fp, $sp
-b3:
-	li $t0, 1000
-	sw $t0, 0($fp)
-b4:
-	j b6
-b5:
-b6:
-	li $v0, 0
-	jr $ra
-
-a:
-	addi $sp, $sp, -4
+	addi $sp, $sp, -20
 	move $fp, $sp
 b0:
-	li $t0, 2
-	sw $t0, 0($fp)
-	beq $t0, $zero, b2
-b2:
+	li $t0, -3
+	mul $t1, $t0, 7
+	li $v1, -1431655765
+	mult $t1, $v1
+	mfhi $v1
+	addu $v1, $t1, $v1
+	sra $v1, $v1, 1
+	slt $v0, $t1, $zero
+	addu $v1, $v1, $v0
+	xori $v1, $v1, 0
+	addi $t2, $v1, 0
+	sra $t3, $t2, 1
+	addi $t4, $t3, 6
+	move $a0, $t4
+	li $v0, 1
+	syscall
+	li $v0, 0
 	jr $ra
 

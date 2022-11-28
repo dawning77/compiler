@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class Parser{
 	private final ArrayList<Token> tokens;
-	private final StringBuilder out;
+	private final StringBuilder ast;
 	private final SymbolTable rootST;
 	private final Logger logger;
 	private SymbolTable curST;
@@ -26,7 +26,7 @@ public class Parser{
 
 	public Parser(ArrayList<Token> tokens, Logger logger){
 		this.tokens = tokens;
-		this.out = new StringBuilder();
+		this.ast = new StringBuilder();
 		this.rootST = new SymbolTable(null);
 		this.logger = logger;
 		this.curST = this.rootST;
@@ -37,9 +37,9 @@ public class Parser{
 		this.compUnit = null;
 	}
 
-	public String getOutput(){ return out.toString(); }
+	public String getAST(){ return ast.toString(); }
 
-	private void output(String s){ out.append(s).append('\n'); }
+	private void output(String s){ ast.append(s).append('\n'); }
 
 	private void check(boolean assertion){ if(!assertion){ output("FALSE!!!!!!!!!!!!!!!!!"); } }
 

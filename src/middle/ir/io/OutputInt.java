@@ -1,10 +1,7 @@
 package middle.ir.io;
 
 import backend.mips.instr.*;
-import backend.mips.instr.itype.*;
 import backend.mips.instr.pseudo.*;
-import backend.mips.instr.pseudo.Lw;
-import backend.mips.instr.rtype.*;
 import backend.mips.reg.*;
 import middle.ir.*;
 import middle.operand.*;
@@ -13,24 +10,24 @@ import middle.operand.symbol.*;
 import java.util.*;
 
 public class OutputInt implements ICode{
-	public Operand val;
+	public Operand opd0;
 
-	public OutputInt(Operand val){
-		this.val = val;
+	public OutputInt(Operand opd0){
+		this.opd0 = opd0;
 	}
 
 	@Override
-	public String toString(){ return "Output " + val; }
+	public String toString(){ return "Output " + opd0; }
 
 	@Override
 	public ArrayList<Instr> toInstr(RegManager regManager){
 		ArrayList<Instr> ret = new ArrayList<>();
-		if(val instanceof Imm){
+		if(opd0 instanceof Imm){
 			regManager.setSpare(Reg.$a0);   // write back
-			ret.add(new Li(Reg.$a0, ((Imm)val).val));
+			ret.add(new Li(Reg.$a0, ((Imm)opd0).val));
 		}
-		else if(val instanceof Var){
-			Reg reg = regManager.get((Var)val);
+		else if(opd0 instanceof Var){
+			Reg reg = regManager.get((Var)opd0);
 			if(reg != Reg.$a0){
 				regManager.setSpare(Reg.$a0);   // write back
 				ret.add(new Move(Reg.$a0, reg));

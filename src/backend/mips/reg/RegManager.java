@@ -4,6 +4,7 @@ import backend.*;
 import backend.mips.instr.itype.*;
 import middle.func.*;
 import middle.operand.symbol.*;
+import middle.optim.*;
 
 import java.util.*;
 import java.util.stream.*;
@@ -43,18 +44,20 @@ public class RegManager{
 	}
 
 	public Reg getParam(Symbol sym){
-		if(!curState.vars.containsKey(sym)) {
+		if(!curState.vars.containsKey(sym)){
 			if(sym.type.equals(Symbol.Type.global)) curState.inStack.add(sym);
 			if(!curState.spare.isEmpty()){
 				for(Reg reg: curState.spare){
-					if(reg.equals(Reg.$a0)||reg.equals(Reg.$a1)||reg.equals(Reg.$a2)||reg.equals(Reg.$a3))continue;
+					if(reg.equals(Reg.$a0) || reg.equals(Reg.$a1) || reg.equals(Reg.$a2) || reg.equals(Reg.$a3))
+						continue;
 					setUsed(reg, sym);
 					break;
 				}
 			}
 			else{
 				for(Reg reg: curState.used.keySet()){
-					if(reg.equals(Reg.$a0)||reg.equals(Reg.$a1)||reg.equals(Reg.$a2)||reg.equals(Reg.$a3))continue;
+					if(reg.equals(Reg.$a0) || reg.equals(Reg.$a1) || reg.equals(Reg.$a2) || reg.equals(Reg.$a3))
+						continue;
 					setSpare(reg);
 					setUsed(reg, sym);
 					break;
@@ -116,10 +119,14 @@ public class RegManager{
 
 	public void writeBack(Reg reg, Symbol sym){
 		if(sym instanceof Const) return;
-		if(sym.type.equals(Symbol.Type.param) || sym.type.equals(Symbol.Type.local) || sym.type.equals(Symbol.Type.tmp))
-			mipsManager.genInstr(new Sw(Reg.$fp, reg, sym.loc * 4));
-		else if(sym.type.equals(Symbol.Type.global))
-			mipsManager.genInstr(new backend.mips.instr.pseudo.Sw(reg, sym.name, 0));
+		if(sym instanceof Var){
+			if(ActiveChecker.CHECK.contains(sym.type)){
+				if(mipsManager.curFunc.activeChecker.isActive(mipsManager.curIR, (Var)sym))
+					mipsManager.genInstr(new Sw(Reg.$fp, reg, sym.loc * 4));
+			}
+			else mipsManager.genInstr(new backend.mips.instr.pseudo.Sw(reg, sym.name, 0));
+		}
+		else mipsManager.genInstr(new Sw(Reg.$fp, reg, sym.loc * 4));
 		curState.inStack.add(sym);
 	}
 

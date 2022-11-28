@@ -27,8 +27,9 @@ public class MipsManager{
 
 	public FuncScope curFunc;
 	public BasicBlock curBB;
+	public ICode curIR;
+	public int callCnt;
 
-	private final StringBuilder iCodes;
 	private final StringBuilder mips;
 	public String indent = "";
 
@@ -39,13 +40,12 @@ public class MipsManager{
 		this.strs = iCodeManager.strs;
 		this.globalVars = iCodeManager.globalVars;
 		this.regManager = new RegManager(this);
-		this.iCodes = new StringBuilder();
 		this.mips = new StringBuilder();
 		this.curFunc = null;
 		this.curBB = null;
+		this.curIR = null;
+		this.callCnt = 0;
 	}
-
-	public String getICodes(){ return iCodes.toString(); }
 
 	public String getMips(){ return mips.toString(); }
 
@@ -88,30 +88,32 @@ public class MipsManager{
 
 	private void genFunc(FuncScope func){
 		curFunc = func;
+		func.activeChecker.activeAnalyse();
 		regManager.setAllSpareWithoutWriteBack();
 		genInstr(new middle.ir.Label(curFunc.name));
 		if(curFunc.frameSize != 0) genInstr(new Addi(Reg.$sp, Reg.$sp, -curFunc.frameSize * 4));   // genFrame
 		genInstr(new Move(Reg.$fp, Reg.$sp));
-		curBB = func.firstBB;
-		while(curBB != null){
+		for(BasicBlock bb: func.bbs){
+			curBB = bb;
 			curBB.iCodes.forEach(this::genInstr);
-			curBB = curBB.follow;
 		}
-		iCodes.append('\n');
 		mips.append('\n');
 	}
 
 	private void genInstr(ICode iCode){
-		iCodes.append(iCode).append('\n');
-		System.out.println(iCode);
-		int frameSize = iCode instanceof Call? funcNameMap.get(((Call)iCode).funcName).frameSize: -1;
-		int paramSize = iCode instanceof Call? funcNameMap.get(((Call)iCode).funcName).paramSize: -1;
-		if(iCode instanceof Push) prologue();
-		ArrayList<Instr> instrs = iCode.toInstr(this.regManager);
-		instrs.forEach(this::genInstr);
-		if(iCode instanceof Call) {
+		curIR = iCode;
+		ArrayList<Instr> instrs;
+		if(iCode instanceof Call){
+			int frameSize = funcNameMap.get(((Call)iCode).funcName).frameSize;
+			int paramSize = funcNameMap.get(((Call)iCode).funcName).paramSize;
+			instrs = iCode.toInstr(this.regManager);
+			instrs.forEach(this::genInstr);
 			genInstr(new Addi(Reg.$sp, Reg.$sp, (frameSize + paramSize) * 4));
 			epilogue();
+		}else {
+			if(iCode instanceof Push) prologue();
+			instrs = iCode.toInstr(this.regManager);
+			instrs.forEach(this::genInstr);
 		}
 	}
 
@@ -134,7 +136,8 @@ public class MipsManager{
 
 	private void prologue(){
 		// before push parameters, save $ra, $fp and allocatable used reg
-		genInstr(new Label("prologue_begin" + curBB.id));
+		callCnt++;
+		genInstr(new Label("prologue_begin" + callCnt));
 		beforeCallBB = curBB;
 		savedLoc = new HashMap<>();
 		savedMap = new HashMap<>();
@@ -146,7 +149,7 @@ public class MipsManager{
 		HashSet<Reg> used = new HashSet<>(regManager.curState.used.keySet());
 		used.forEach(this::save);
 		genInstr(new Addi(Reg.$sp, Reg.$sp, -regSize * 4));
-		genInstr(new Label("prologue_end" + curBB.id));
+		genInstr(new Label("prologue_end" + callCnt));
 	}
 
 	private void restore(Reg reg){
@@ -156,10 +159,10 @@ public class MipsManager{
 
 	private void epilogue(){
 		// after jr, restore regs
-		genInstr(new Label("epilogue_begin" + curBB.id));
+		genInstr(new Label("epilogue_begin" + callCnt));
 		genInstr(new Addi(Reg.$sp, Reg.$sp, regSize * 4));
 		savedLoc.keySet().forEach(this::restore);
 		regManager.loadRegState(beforeCallBB);
-		genInstr(new Label("epilogue_end" + curBB.id));
+		genInstr(new Label("epilogue_end" + callCnt));
 	}
 }

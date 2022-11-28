@@ -57,20 +57,20 @@ public class Compiler{
 		logger = new Logger();
 		parser = new Parser(lexer.tokens, logger);
 		parser.parseCompUnit();
-		if(OUTPUT_AST){ writeFile("output.txt", parser.getOutput()); }
+		if(OUTPUT_AST){ writeFile("output.txt", parser.getAST()); }
 		if(OUTPUT_ERROR){ writeFile("error.txt", logger.getLog()); }
-		if(logger.getLog().length()!=0){
+		if(logger.getLog().length() != 0){
 			System.out.println("ERROR OCCURS!!!!!");
 			return;
 		}
 
 		iCodeManager = new ICodeManager();
 		iCodeManager.analyseCompUnit(parser.compUnit);
+		if(OUTPUT_ICODE) System.out.println(iCodeManager.getICodes());
 
 		mipsManager = new MipsManager(iCodeManager);
 		mipsManager.genMips();
-		if(OUTPUT_ICODE) System.out.println(mipsManager.getICodes());
-		if(OUTPUT_MIPS) {
+		if(OUTPUT_MIPS){
 			System.out.println(mipsManager.getMips());
 			writeFile("mips.txt", mipsManager.getMips());
 			// writeFile("/Applications/testmips.asm", mipsManager.getMips());
