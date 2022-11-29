@@ -1,4 +1,5 @@
 .data
+	s0: .asciiz "\n"
 
 .text
 jal main
@@ -6,24 +7,36 @@ li $v0, 10
 syscall
 
 main:
-	addi $sp, $sp, -20
+	addi $sp, $sp, -112
 	move $fp, $sp
 b0:
-	li $t0, -3
-	mul $t1, $t0, 7
-	li $v1, -1431655765
-	mult $t1, $v1
-	mfhi $v1
-	addu $v1, $t1, $v1
-	sra $v1, $v1, 1
-	slt $v0, $t1, $zero
-	addu $v1, $v1, $v0
-	xori $v1, $v1, 0
-	addi $t2, $v1, 0
-	sra $t3, $t2, 1
-	addi $t4, $t3, 6
-	move $a0, $t4
+	li $t0, 1
+	li $t1, -2
+	li $t2, 3
+	li $t3, 4
+	li $t4, 5
+	li $t5, 6
+	li $t6, 111
+	li $t7, 357
+	li $s0, 38
+	mul $s1, $t7, 3
+	addu $s2, $t6, $s1
+	move $s3, $s2
+	li $s4, 3
+	li $s5, 4
+	li $s6, 5
+	li $s7, 6
+	li $t8, 7
+	li $t9, 8
+	li $a1, 0
+	subu $a1, $a1, $t6
+	subu $a2, $a1, $t7
+	move $a3, $a2
+	move $a0, $a3
 	li $v0, 1
+	syscall
+	la $a0, s0
+	li $v0, 4
 	syscall
 	li $v0, 0
 	jr $ra

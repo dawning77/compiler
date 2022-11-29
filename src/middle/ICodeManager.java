@@ -29,6 +29,7 @@ import static frontend.token.TokenType.GRE;
 import static frontend.token.TokenType.LEQ;
 import static frontend.token.TokenType.LSS;
 import static frontend.token.TokenType.NEQ;
+import static frontend.token.TokenType.PLUS;
 import static middle.operand.symbol.Symbol.Type.global;
 import static middle.operand.symbol.Symbol.Type.local;
 import static middle.operand.symbol.Symbol.Type.param;
@@ -594,6 +595,7 @@ public class ICodeManager{
 
 	// UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
 	// UnaryOp → '+' | '−' | '!'
+	// return val is var or imm
 	private Operand analyseUnaryExp(UnaryExp unaryExp){
 		if(unaryExp.primaryExp != null){ return analysePrimaryExp(unaryExp.primaryExp); }
 		else if(unaryExp.unaryOp != null){
@@ -672,52 +674,114 @@ public class ICodeManager{
 
 	// MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
 	private Operand analyseMulExp(MulExp mulExp){
-		Operand opd0 = analyseUnaryExp(mulExp.unaryExps.get(0));
-		Operand opd1;
-		Operand res = opd0;
-		for(int i = 1; i < mulExp.unaryExps.size(); i++){
-			opd1 = analyseUnaryExp(mulExp.unaryExps.get(i));
-			res = genNewTmp();
-			ICode iCode;
-			switch(mulExp.ops.get(i - 1)){
-				case MULT:
-					iCode = new Mul(opd0, opd1, res); break;
-				case DIV:
-					iCode = new Div(opd0, opd1, res); break;
-				case MOD:
-					iCode = new Mod(opd0, opd1, res); break;
-				default:
-					iCode = null;
+		if(mulExp.isAllMul()){
+			// can reorder, gather numbers
+			int val = 1;
+			Operand res = null;
+			for(int i = 0; i < mulExp.unaryExps.size(); i++){
+				UnaryExp unaryExp = mulExp.unaryExps.get(i);
+				Operand tmp = analyseUnaryExp(unaryExp);
+				if(tmp instanceof Imm) val *= ((Imm)tmp).val;
+				else{
+					if(res == null) res = tmp;
+					else{
+						Operand newRes = genNewTmp();
+						addICode(new Mul(res, tmp, newRes));
+						res = newRes;
+					}
+				}
 			}
-			addICode(iCode);
-			opd0 = res;
+			if(res != null){
+				if(val != 1){
+					Operand newRes = genNewTmp();
+					addICode(new Mul(res, new Imm(val), newRes));
+					res = newRes;
+				}
+				return res;
+			}
+			else return new Imm(val);
 		}
-		return res;
+		else{
+			Operand res = analyseUnaryExp(mulExp.unaryExps.get(0));
+			for(int i = 1; i < mulExp.unaryExps.size(); i++){
+				Operand tmp = analyseUnaryExp(mulExp.unaryExps.get(i));
+				if(tmp instanceof Imm && res instanceof Imm){
+					switch(mulExp.ops.get(i - 1)){
+						case MULT:
+							res = new Imm(((Imm)res).val * ((Imm)tmp).val); break;
+						case DIV:
+							res = new Imm(((Imm)res).val / ((Imm)tmp).val); break;
+						case MOD:
+							res = new Imm(((Imm)res).val % ((Imm)tmp).val); break;
+						default:
+							res = null;
+					}
+				}
+				else{
+					Operand newRes = genNewTmp();
+					ICode iCode;
+					switch(mulExp.ops.get(i - 1)){
+						case MULT:
+							iCode = new Mul(res, tmp, newRes); break;
+						case DIV:
+							iCode = new Div(res, tmp, newRes); break;
+						case MOD:
+							iCode = new Mod(res, tmp, newRes); break;
+						default:
+							iCode = null;
+					}
+					addICode(iCode);
+					res = newRes;
+				}
+			}
+			return res;
+		}
 	}
 
 	// AddExp → MulExp | AddExp ('+' | '−') MulExp
 	private Operand analyseAddExp(AddExp addExp){
-		Operand opd0 = analyseMulExp(addExp.mulExps.get(0));
-		Operand opd1;
-		Operand res = opd0;
-		for(int i = 1; i < addExp.mulExps.size(); i++){
-			opd1 = analyseMulExp(addExp.mulExps.get(i));
-			res = genNewTmp();
-			ICode iCode;
-			switch(addExp.ops.get(i - 1)){
-				case PLUS:
-					iCode = new Add(opd0, opd1, res);
-					break;
-				case MINU:
-					iCode = new Sub(opd0, opd1, res);
-					break;
-				default:
-					iCode = null;
+		// can reorder, gather numbers
+		int val = 0;
+		Operand res = null;
+		for(int i = 0; i < addExp.mulExps.size(); i++){
+			MulExp mulExp = addExp.mulExps.get(i);
+			Operand tmp = analyseMulExp(mulExp);
+			if(tmp instanceof Imm){
+				if(i == 0 || addExp.ops.get(i - 1).equals(PLUS)) val += ((Imm)tmp).val;
+				else val -= ((Imm)tmp).val;
 			}
-			addICode(iCode);
-			opd0 = res;
+			else{
+				if(i == 0 || addExp.ops.get(i - 1).equals(PLUS)){
+					if(res == null) res = tmp;
+					else{
+						Operand newRes = genNewTmp();
+						addICode(new Add(res, tmp, newRes));
+						res = newRes;
+					}
+				}
+				else{
+					if(res == null){
+						res = genNewTmp();
+						addICode(new Sub(new Imm(val), tmp, res));
+						val = 0;
+					}
+					else{
+						Operand newRes = genNewTmp();
+						addICode(new Sub(res, tmp, newRes));
+						res = newRes;
+					}
+				}
+			}
 		}
-		return res;
+		if(res != null){
+			if(val != 0){
+				Operand newRes = genNewTmp();
+				addICode(new Add(res, new Imm(val), newRes));
+				res = newRes;
+			}
+			return res;
+		}
+		else return new Imm(val);
 	}
 
 	private void analyseIf(Stmt s){

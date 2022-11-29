@@ -108,9 +108,11 @@ public class MipsManager{
 			int paramSize = funcNameMap.get(((Call)iCode).funcName).paramSize;
 			instrs = iCode.toInstr(this.regManager);
 			instrs.forEach(this::genInstr);
-			genInstr(new Addi(Reg.$sp, Reg.$sp, (frameSize + paramSize) * 4));
+			if(frameSize + paramSize != 0)
+				genInstr(new Addi(Reg.$sp, Reg.$sp, (frameSize + paramSize) * 4));
 			epilogue();
-		}else {
+		}
+		else{
 			if(iCode instanceof Push) prologue();
 			instrs = iCode.toInstr(this.regManager);
 			instrs.forEach(this::genInstr);
@@ -118,6 +120,7 @@ public class MipsManager{
 	}
 
 	public void genInstr(Instr instr){
+		System.out.println(instr);
 		if(!(instr instanceof Label)) mips.append('\t');
 		mips.append(indent).append(instr).append('\n');
 	}
@@ -148,7 +151,7 @@ public class MipsManager{
 		save(Reg.$fp);
 		HashSet<Reg> used = new HashSet<>(regManager.curState.used.keySet());
 		used.forEach(this::save);
-		genInstr(new Addi(Reg.$sp, Reg.$sp, -regSize * 4));
+		if(regSize != 0) genInstr(new Addi(Reg.$sp, Reg.$sp, -regSize * 4));
 		genInstr(new Label("prologue_end" + callCnt));
 	}
 
