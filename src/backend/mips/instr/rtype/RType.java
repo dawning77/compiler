@@ -7,7 +7,7 @@ public abstract class RType implements Instr{
 	public Reg rs;
 	public Reg rt;
 	public Reg rd;
-	// public Integer shamt;
+
 	public RType(Reg rs, Reg rt, Reg rd){
 		this.rs = rs;
 		this.rt = rt;

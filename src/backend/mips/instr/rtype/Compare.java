@@ -12,7 +12,5 @@ public class Compare extends RType{
 	}
 
 	@Override
-	public String toString(){
-		return "s" + rel + " " + rd + ", " + rs + ", " + rt;
-	}
+	public String toString(){ return "s" + rel + " " + rd + ", " + rs + ", " + rt; }
 }

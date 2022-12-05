@@ -1,7 +1,6 @@
 package middle;
 
 public enum Rel{
-
 	ne{
 		public boolean satisfied(int v0, int v1){ return v0 != v1; }
 

@@ -31,11 +31,17 @@ public class Div extends Binary{
 		}
 		else if(opd0 instanceof Imm){
 			int val0 = ((Imm)opd0).val;
-			reg1 = regManager.getUse((Var)opd1);
-			resReg = regManager.getDef((Var)res);
-			instrs.add(new Li(resReg, ((Imm)opd0).val));
-			if(val0 == 0) instrs.add(new Li(resReg, 0));
-			else instrs.add(new backend.mips.instr.rtype.Div(resReg, reg1, resReg));
+			if(val0 == 0){
+				resReg = regManager.getDef((Var)res);
+				instrs.add(new Li(resReg, 0));
+			}
+			else{
+				reg1 = regManager.getUse((Var)opd1);
+				resReg = regManager.getDef((Var)res);
+				instrs.add(new Li(resReg, ((Imm)opd0).val));
+				instrs.add(new backend.mips.instr.itype.Div(resReg, reg1));
+				instrs.add(new Mflo(resReg));
+			}
 		}
 		else if(opd1 instanceof Imm){
 			int val1 = ((Imm)opd1).val;
@@ -68,7 +74,8 @@ public class Div extends Binary{
 			reg0 = regManager.getUse((Var)opd0);
 			reg1 = regManager.getUse((Var)opd1);
 			resReg = regManager.getDef((Var)res);
-			instrs.add(new backend.mips.instr.rtype.Div(reg0, reg1, resReg));
+			instrs.add(new backend.mips.instr.itype.Div(reg0, reg1));
+			instrs.add(new Mflo(resReg));
 		}
 	}
 }

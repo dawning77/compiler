@@ -31,10 +31,13 @@ public class Mod extends Binary{
 		}
 		else if(opd0 instanceof Imm){
 			int val0 = ((Imm)opd0).val;
-			reg1 = regManager.getUse((Var)opd1);
-			resReg = regManager.getDef((Var)res);
-			if(val0 == 0) instrs.add(new Li(resReg, 0));
+			if(val0 == 0){
+				resReg = regManager.getDef((Var)res);
+				instrs.add(new Li(resReg, 0));
+			}
 			else{
+				reg1 = regManager.getUse((Var)opd1);
+				resReg = regManager.getDef((Var)res);
 				instrs.add(new Li(resReg, ((Imm)opd0).val));
 				instrs.add(new backend.mips.instr.itype.Div(resReg, reg1));
 				instrs.add(new Mfhi(resReg));
