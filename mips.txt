@@ -1,5 +1,4 @@
 .data
-	s0: .asciiz "\n"
 
 .text
 jal main
@@ -7,37 +6,15 @@ li $v0, 10
 syscall
 
 main:
-	addi $sp, $sp, -112
-	move $fp, $sp
+# param begin from 4:
+	addi $sp, $sp, -8
 b0:
+	li $t0, 0
+	sw $t0, 0($sp)
+	beq $t0, $zero, b2
+b1:
 	li $t0, 1
-	li $t1, -2
-	li $t2, 3
-	li $t3, 4
-	li $t4, 5
-	li $t5, 6
-	li $t6, 111
-	li $t7, 357
-	li $s0, 38
-	mul $s1, $t7, 3
-	addu $s2, $t6, $s1
-	move $s3, $s2
-	li $s4, 3
-	li $s5, 4
-	li $s6, 5
-	li $s7, 6
-	li $t8, 7
-	li $t9, 8
-	li $a1, 0
-	subu $a1, $a1, $t6
-	subu $a2, $a1, $t7
-	move $a3, $a2
-	move $a0, $a3
-	li $v0, 1
-	syscall
-	la $a0, s0
-	li $v0, 4
-	syscall
+b2:
 	li $v0, 0
 	jr $ra
 

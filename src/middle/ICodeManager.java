@@ -165,10 +165,10 @@ public class ICodeManager{
 					info = new GlobalVarInfo(1, vals);
 					globalVars.put(sym, info);
 				}
-				else{
-					int initVal = calc.calc(constDef.constInitVal.constExp);
-					addICode(new Assign(sym, new Imm(initVal)));
-				}
+//				else{
+//					int initVal = calc.calc(constDef.constInitVal.constExp);
+//					addICode(new Assign(sym, new Imm(initVal)));
+//				}
 				break;
 			case 1:
 				int len = calc.calc(constDef.constExps.get(0));
@@ -374,7 +374,6 @@ public class ICodeManager{
 	// FuncFParams → FuncFParam { ',' FuncFParam }
 	private LinkedHashMap<String, Symbol> analyseFuncFParams(FuncFParams funcFParams){
 		LinkedHashMap<String, Symbol> paramNameMap = new LinkedHashMap<>();
-		ArrayList<Symbol> params = new ArrayList<>();
 		if(funcFParams != null){
 			funcFParams.funcFParams.forEach(funcFParam->{
 				Symbol sym;
@@ -393,10 +392,8 @@ public class ICodeManager{
 						sym = null; break;
 				}
 				paramNameMap.put(name, sym);
-				params.add(sym);
 			});
 		}
-		addICode(new ParamDecl(params));
 		return paramNameMap;
 	}
 

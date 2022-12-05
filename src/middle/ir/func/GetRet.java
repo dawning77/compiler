@@ -1,19 +1,18 @@
 package middle.ir.func;
 
-import backend.mips.instr.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.ir.*;
 import middle.operand.Operand;
 import middle.operand.symbol.*;
 
-import java.util.*;
-
-public class GetRet implements ICode{
+public class GetRet extends ICode{
 	public Operand res;
 
 	public GetRet(Operand res){
+		super();
 		this.res = res;
+		def.add((Symbol)res);
 	}
 
 	@Override
@@ -22,10 +21,8 @@ public class GetRet implements ICode{
 	}
 
 	@Override
-	public ArrayList<Instr> toInstr(RegManager regManager){
-		ArrayList<Instr> ret = new ArrayList<>();
-		Reg reg = regManager.get((Var)res);
-		ret.add(new Move(reg, Reg.$v0));
-		return ret;
+	public void genInstr(RegManager regManager){
+		Reg reg = regManager.getDef((Var)res);
+		instrs.add(new Move(reg, Reg.$v0));
 	}
 }

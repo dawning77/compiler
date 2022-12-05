@@ -20,7 +20,7 @@ public class Compiler{
 
 	public static final boolean OUTPUT_AST = false;
 	public static final boolean OUTPUT_ERROR = false;
-	public static final boolean OUTPUT_ICODE = true;
+	public static final boolean OUTPUT_ICODE = false;
 	public static final boolean OUTPUT_MIPS = true;
 
 	private static String readFile(String inputFilePath){
@@ -66,14 +66,10 @@ public class Compiler{
 
 		iCodeManager = new ICodeManager();
 		iCodeManager.analyseCompUnit(parser.compUnit);
-		if(OUTPUT_ICODE) System.out.println(iCodeManager.getICodes());
+		if(OUTPUT_ICODE){ writeFile("ir.txt", iCodeManager.getICodes()); }
 
 		mipsManager = new MipsManager(iCodeManager);
 		mipsManager.genMips();
-		if(OUTPUT_MIPS){
-			System.out.println(mipsManager.getMips());
-			writeFile("mips.txt", mipsManager.getMips());
-			// writeFile("/Applications/testmips.asm", mipsManager.getMips());
-		}
+		if(OUTPUT_MIPS){ writeFile("mips.txt", mipsManager.getMips()); }
 	}
 }

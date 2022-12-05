@@ -1,6 +1,5 @@
 package middle.ir.calc.binary;
 
-import backend.mips.instr.*;
 import backend.mips.instr.itype.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.instr.pseudo.Mul;
@@ -21,51 +20,55 @@ public class Div extends Binary{
 	}
 
 	@Override
-	public ArrayList<Instr> toInstr(RegManager regManager){
-		ArrayList<Instr> ret = new ArrayList<>();
+	public void genInstr(RegManager regManager){
 		Reg reg0;
 		Reg reg1;
-		Reg resReg = regManager.get((Var)res);
+		Reg resReg;
 		if(opd0 instanceof Imm && opd1 instanceof Imm){
 			int val = ((Imm)opd0).val / ((Imm)opd1).val;
-			ret.add(new Li(resReg, val));
+			resReg = regManager.getDef((Var)res);
+			instrs.add(new Li(resReg, val));
 		}
 		else if(opd0 instanceof Imm){
 			int val0 = ((Imm)opd0).val;
-			reg1 = regManager.get((Var)opd1);
-			ret.add(new Li(resReg, ((Imm)opd0).val));
-			if(val0 == 0) ret.add(new Li(resReg, 0));
-			else ret.add(new backend.mips.instr.rtype.Div(resReg, reg1, resReg));
+			reg1 = regManager.getUse((Var)opd1);
+			resReg = regManager.getDef((Var)res);
+			instrs.add(new Li(resReg, ((Imm)opd0).val));
+			if(val0 == 0) instrs.add(new Li(resReg, 0));
+			else instrs.add(new backend.mips.instr.rtype.Div(resReg, reg1, resReg));
 		}
 		else if(opd1 instanceof Imm){
 			int val1 = ((Imm)opd1).val;
-			reg0 = regManager.get((Var)opd0);
-			if(val1 == 1) ret.add(new Move(resReg, reg0));
-			else if(val1 == -1) ret.add(new Sub(Reg.$zero, reg0, resReg));
-			else if(Utils.isPowerOf2(val1)) ret.add(new Sra(reg0, resReg, Utils.log2I(val1)));
-				//			else ret.add(new backend.mips.instr.itype.Div(reg0, resReg, ((Imm)opd1).val));
+			reg0 = regManager.getUse((Var)opd0);
+			resReg = regManager.getDef((Var)res);
+			if(val1 == 1) instrs.add(new Move(resReg, reg0));
+			else if(val1 == -1) instrs.add(new Sub(Reg.$zero, reg0, resReg));
+			else if(Utils.isPowerOf2(Math.abs(val1))){
+				instrs.add(new Sra(reg0, resReg, Utils.log2I(Math.abs(val1))));
+				if(val1 < 0) instrs.add(new Sub(Reg.$zero, resReg, resReg));
+			}
 			else{
 				int l = Math.max((int)Math.ceil(Utils.log2D(Math.abs(val1))), 1);
 				long m = 1 + (1L << (32 + l - 1)) / Math.abs(val1);
 				int m2 = (int)(m - (1L << 32));
 				int sign = val1 < 0? -1: 0;
-				ret.addAll(Arrays.asList(
-						new Li(Reg.$v1, m2),
-						new Mul(reg0, Reg.$v1),
-						new Mfhi(Reg.$v1),
-						new Add(reg0, Reg.$v1, Reg.$v1),
-						new Sra(Reg.$v1, Reg.$v1, l - 1),
-						new Compare(Rel.lt, reg0, Reg.$zero, Reg.$v0),
-						new Add(Reg.$v1, Reg.$v0, Reg.$v1),
-						new Xori(Reg.$v1, Reg.$v1, sign),
-						new Addi(Reg.$v1, resReg, -sign)));
+				instrs.addAll(Arrays.asList(
+						new Li(Reg.$v0, m2),
+						new Mul(reg0, Reg.$v0),
+						new Mfhi(Reg.$v0),
+						new Add(reg0, Reg.$v0, Reg.$v0),
+						new Sra(Reg.$v0, Reg.$v0, l - 1),
+						new Compare(Rel.lt, reg0, Reg.$zero, Reg.$a0),
+						new Add(Reg.$v0, Reg.$a0, Reg.$v0),
+						new Xori(Reg.$v0, Reg.$v0, sign),
+						new Addi(Reg.$v0, resReg, -sign)));
 			}
 		}
 		else{
-			reg0 = regManager.get((Var)opd0);
-			reg1 = regManager.get((Var)opd1);
-			ret.add(new backend.mips.instr.rtype.Div(reg0, reg1, resReg));
+			reg0 = regManager.getUse((Var)opd0);
+			reg1 = regManager.getUse((Var)opd1);
+			resReg = regManager.getDef((Var)res);
+			instrs.add(new backend.mips.instr.rtype.Div(reg0, reg1, resReg));
 		}
-		return ret;
 	}
 }

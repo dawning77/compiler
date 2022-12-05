@@ -3,15 +3,12 @@ package backend;
 import backend.mips.instr.*;
 import backend.mips.instr.Label;
 import backend.mips.instr.itype.*;
-import backend.mips.instr.itype.Lw;
-import backend.mips.instr.itype.Sw;
 import backend.mips.instr.jtype.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.*;
 import middle.func.*;
 import middle.ir.*;
-import middle.ir.func.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
@@ -28,10 +25,10 @@ public class MipsManager{
 	public FuncScope curFunc;
 	public BasicBlock curBB;
 	public ICode curIR;
-	public int callCnt;
 
 	private final StringBuilder mips;
 	public String indent = "";
+	public static final boolean DEBUG = false;
 
 	public MipsManager(ICodeManager iCodeManager){
 		this.funcNameMap = iCodeManager.funcNameMap;
@@ -44,7 +41,6 @@ public class MipsManager{
 		this.curFunc = null;
 		this.curBB = null;
 		this.curIR = null;
-		this.callCnt = 0;
 	}
 
 	public String getMips(){ return mips.toString(); }
@@ -72,7 +68,6 @@ public class MipsManager{
 					mips.append(info.vals.get(i));
 					if(i != info.size - 1) mips.append(", ");
 				}
-				regManager.curState.inStack.add(sym);
 			}
 			else mips.append(" .space ").append(4 * info.size);
 			mips.append('\n');
@@ -88,11 +83,14 @@ public class MipsManager{
 
 	private void genFunc(FuncScope func){
 		curFunc = func;
-		func.activeChecker.activeAnalyse();
-		regManager.setAllSpareWithoutWriteBack();
+		func.liveVarAnalyser.liveVarAnalyse();
+		regManager.init();
+		globalVars.keySet().forEach(regManager::addToStack);
+		func.params.forEach(regManager::addToStack);
 		genInstr(new middle.ir.Label(curFunc.name));
-		if(curFunc.frameSize != 0) genInstr(new Addi(Reg.$sp, Reg.$sp, -curFunc.frameSize * 4));   // genFrame
-		genInstr(new Move(Reg.$fp, Reg.$sp));
+		genInstr(new middle.ir.Label("# param begin from " + curFunc.frameSize * 4));
+		genInstr(new Addi(Reg.$sp, Reg.$sp,
+		                  -(curFunc.frameSize + curFunc.paramSize + 1) * 4));
 		for(BasicBlock bb: func.bbs){
 			curBB = bb;
 			curBB.iCodes.forEach(this::genInstr);
@@ -102,70 +100,16 @@ public class MipsManager{
 
 	private void genInstr(ICode iCode){
 		curIR = iCode;
-		ArrayList<Instr> instrs;
-		if(iCode instanceof Call){
-			int frameSize = funcNameMap.get(((Call)iCode).funcName).frameSize;
-			int paramSize = funcNameMap.get(((Call)iCode).funcName).paramSize;
-			instrs = iCode.toInstr(this.regManager);
-			instrs.forEach(this::genInstr);
-			if(frameSize + paramSize != 0)
-				genInstr(new Addi(Reg.$sp, Reg.$sp, (frameSize + paramSize) * 4));
-			epilogue();
-		}
-		else{
-			if(iCode instanceof Push) prologue();
-			instrs = iCode.toInstr(this.regManager);
-			instrs.forEach(this::genInstr);
-		}
+		if(DEBUG) System.out.println('\n' + iCode.toString());
+		iCode.genInstr(regManager);
+		iCode.instrs.forEach(this::genInstr);
+		if(DEBUG) System.out.println(regManager);
+		if(DEBUG) System.out.println(curFunc.liveVarAnalyser.getOutput(iCode));
 	}
 
 	public void genInstr(Instr instr){
-		System.out.println(instr);
+		if(DEBUG) System.out.println(instr);
 		if(!(instr instanceof Label)) mips.append('\t');
 		mips.append(indent).append(instr).append('\n');
-	}
-
-	public HashMap<Reg, Integer> savedLoc;
-	public HashMap<Reg, Symbol> savedMap;
-	public BasicBlock beforeCallBB;
-	public int regSize;
-
-	private void save(Reg reg){
-		savedLoc.put(reg, regSize++);
-		savedMap.put(reg, regManager.curState.used.get(reg));        // ra, fp map to null
-		genInstr(new Sw(Reg.$sp, reg, -regSize * 4));
-		// regManager.setSpareWithoutWriteBack(reg);
-	}
-
-	private void prologue(){
-		// before push parameters, save $ra, $fp and allocatable used reg
-		callCnt++;
-		genInstr(new Label("prologue_begin" + callCnt));
-		beforeCallBB = curBB;
-		savedLoc = new HashMap<>();
-		savedMap = new HashMap<>();
-		regSize = 0;
-		regManager.setAllGlobalSpare();
-		regManager.saveRegState(curBB);
-		save(Reg.$ra);
-		save(Reg.$fp);
-		HashSet<Reg> used = new HashSet<>(regManager.curState.used.keySet());
-		used.forEach(this::save);
-		if(regSize != 0) genInstr(new Addi(Reg.$sp, Reg.$sp, -regSize * 4));
-		genInstr(new Label("prologue_end" + callCnt));
-	}
-
-	private void restore(Reg reg){
-		genInstr(new Lw(Reg.$sp, reg, -(savedLoc.get(reg) + 1) * 4));
-		// regManager.setUsed(reg, savedMap.get(reg));      // ra, fp map to null
-	}
-
-	private void epilogue(){
-		// after jr, restore regs
-		genInstr(new Label("epilogue_begin" + callCnt));
-		genInstr(new Addi(Reg.$sp, Reg.$sp, regSize * 4));
-		savedLoc.keySet().forEach(this::restore);
-		regManager.loadRegState(beforeCallBB);
-		genInstr(new Label("epilogue_end" + callCnt));
 	}
 }

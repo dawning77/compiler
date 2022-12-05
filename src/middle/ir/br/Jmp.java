@@ -1,17 +1,15 @@
 package middle.ir.br;
 
-import backend.mips.instr.*;
 import backend.mips.instr.jtype.*;
 import backend.mips.reg.*;
 import middle.func.*;
 import middle.ir.*;
 
-import java.util.*;
-
-public class Jmp implements ICode{
+public class Jmp extends ICode{
 	public BasicBlock bb;
 
 	public Jmp(BasicBlock bb){
+		super();
 		this.bb = bb;
 	}
 
@@ -19,10 +17,8 @@ public class Jmp implements ICode{
 	public String toString(){ return "Jmp " + bb; }
 
 	@Override
-	public ArrayList<Instr> toInstr(RegManager regManager){
-		ArrayList<Instr> ret = new ArrayList<>();
+	public void genInstr(RegManager regManager){
 		regManager.setAllSpare();
-		ret.add(new J(bb.toString()));
-		return ret;
+		instrs.add(new J(bb.toString()));
 	}
 }

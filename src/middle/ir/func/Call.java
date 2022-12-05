@@ -1,16 +1,16 @@
 package middle.ir.func;
 
-import backend.mips.instr.*;
+import backend.mips.instr.itype.*;
 import backend.mips.instr.jtype.*;
 import backend.mips.reg.*;
+import middle.func.*;
 import middle.ir.*;
 
-import java.util.*;
-
-public class Call implements ICode{
+public class Call extends ICode{
 	public String funcName;
 
 	public Call(String funcName){
+		super();
 		this.funcName = funcName;
 	}
 
@@ -18,9 +18,11 @@ public class Call implements ICode{
 	public String toString(){ return "Call " + funcName; }
 
 	@Override
-	public ArrayList<Instr> toInstr(RegManager regManager){
-		ArrayList<Instr> ret = new ArrayList<>();
-		ret.add(new Jal(funcName));
-		return ret;
+	public void genInstr(RegManager regManager){
+		regManager.setAllSpare();
+		instrs.add(new Jal(funcName));
+		FuncScope func = regManager.mipsManager.funcNameMap.get(funcName);
+		instrs.add(new Addi(Reg.$sp, Reg.$sp, (func.frameSize + func.paramSize + 1) * 4));
+		instrs.add(new Lw(Reg.$sp, Reg.$ra, -4));
 	}
 }

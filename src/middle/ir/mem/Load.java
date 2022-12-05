@@ -1,68 +1,68 @@
 package middle.ir.mem;
 
-import backend.mips.instr.*;
 import backend.mips.instr.itype.*;
 import backend.mips.instr.itype.Lw;
 import backend.mips.instr.pseudo.*;
 import backend.mips.instr.rtype.*;
 import backend.mips.reg.*;
-import middle.ir.*;
 import middle.operand.*;
 import middle.operand.symbol.*;
 
-import java.util.*;
-
-public class Load extends AccessMem implements ICode{
-	public Load(Symbol sym, Operand idx, Operand val){ super(sym, idx, val); }
+public class Load extends AccessMem{
+	public Load(Symbol sym, Operand idx, Operand val){
+		super(sym, idx, val);
+		def.add((Symbol)val);
+		if(idx instanceof Symbol) use.add((Symbol)idx);
+		if(sym.type.equals(Symbol.Type.param)) use.add(sym);
+	}
 
 	@Override
 	public String toString(){ return val + " = " + sym + '[' + idx + ']'; }
 
 	@Override
-	public ArrayList<Instr> toInstr(RegManager regManager){
-		ArrayList<Instr> ret = new ArrayList<>();
+	public void genInstr(RegManager regManager){
 		Reg valReg;
 		assert val instanceof Var;
-		valReg = regManager.get((Var)val);
 		switch(sym.type){
 			case local:
+				valReg = regManager.getDef((Var)val);
 				if(idx instanceof Imm)
-					ret.add(new Lw(Reg.$fp, valReg, (sym.loc + ((Imm)idx).val) * 4));
+					instrs.add(new Lw(Reg.$sp, valReg, (sym.loc + ((Imm)idx).val) * 4));
 				else if(idx instanceof Var){
-					Reg idxReg = regManager.get((Symbol)idx);
-					ret.add(new Move(Reg.$v1, idxReg));
-					ret.add(new Sll(Reg.$v1, Reg.$v1, 2));
-					ret.add(new Addi(Reg.$v1, Reg.$v1, sym.loc * 4));
-					ret.add(new Add(Reg.$v1, Reg.$fp, Reg.$v1));
-					ret.add(new Lw(Reg.$v1, valReg, 0));
+					loadOffset((Var)idx, regManager);
+					instrs.add(new Addi(Reg.$v0, Reg.$v0, sym.loc * 4));
+					instrs.add(new Add(Reg.$v0, Reg.$sp, Reg.$v0));
+					instrs.add(new Lw(Reg.$v0, valReg, 0));
 				}
 				break;
 			case global:
+				valReg = regManager.getDef((Var)val);
 				if(idx instanceof Imm)
-					ret.add(new backend.mips.instr.pseudo.Lw(valReg, sym.name, ((Imm)idx).val * 4));
+					instrs.add(new backend.mips.instr.pseudo.Lw(valReg, sym.name, ((Imm)idx).val * 4));
 				else if(idx instanceof Var){
-					Reg idxReg = regManager.get((Symbol)idx);
-					ret.add(new Move(Reg.$v1, idxReg));
-					ret.add(new Sll(Reg.$v1, Reg.$v1, 2));
-					ret.add(new backend.mips.instr.pseudo.Lw(valReg, sym.name, Reg.$v1));
+					loadOffset((Var)idx, regManager);
+					instrs.add(new backend.mips.instr.pseudo.Lw(valReg, sym.name, Reg.$v0));
 				}
 				break;
 			case param:
-				Reg addr = regManager.get(sym);
-				if(idx instanceof Imm){
-					ret.add(new Lw(addr, valReg, ((Imm)idx).val * 4));
-				}
+				Reg addr = regManager.getUse(sym);
+				valReg = regManager.getDef((Var)val);
+				if(idx instanceof Imm)
+					instrs.add(new Lw(addr, valReg, ((Imm)idx).val * 4));
 				else if(idx instanceof Var){
-					Reg idxReg = regManager.get((Symbol)idx);
-					ret.add(new Move(Reg.$v1, idxReg));
-					ret.add(new Sll(Reg.$v1, Reg.$v1, 2));
-					ret.add(new Add(Reg.$v1, addr, Reg.$v1));
-					ret.add(new Lw(Reg.$v1, valReg, 0));
+					loadOffset((Var)idx, regManager);
+					instrs.add(new Add(Reg.$v0, addr, Reg.$v0));
+					instrs.add(new Lw(Reg.$v0, valReg, 0));
 				}
 				break;
 			default:
 				break;
 		}
-		return ret;
+	}
+
+	private void loadOffset(Var idx, RegManager regManager){
+		Reg idxReg = regManager.getUse(idx);
+		instrs.add(new Move(Reg.$v0, idxReg));
+		instrs.add(new Sll(Reg.$v0, Reg.$v0, 2));
 	}
 }

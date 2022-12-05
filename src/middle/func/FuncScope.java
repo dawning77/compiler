@@ -17,7 +17,7 @@ public class FuncScope{
 	public int frameSize;
 	public int paramSize;
 
-	public ActiveChecker activeChecker;
+	public LiveVarAnalyser liveVarAnalyser;
 
 	public FuncScope(String name, String retType){
 		this.name = name;
@@ -29,17 +29,17 @@ public class FuncScope{
 		this.params = new ArrayList<>();
 		this.locals = new ArrayList<>();
 		this.tmps = new ArrayList<>();
-		this.activeChecker = new ActiveChecker(this);
+		this.liveVarAnalyser = new LiveVarAnalyser(this);
 	}
 
 	public void formFrame(){
-		for(Symbol tmp: tmps){
-			tmp.loc = frameSize;
-			frameSize += tmp.size;
-		}
 		for(Symbol local: locals){
 			local.loc = frameSize;
 			frameSize += local.size;
+		}
+		for(Symbol tmp: tmps){
+			tmp.loc = frameSize;
+			frameSize += tmp.size;
 		}
 		for(Symbol param: params){
 			param.loc = frameSize + paramSize;
