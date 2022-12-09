@@ -10,7 +10,7 @@ import middle.operand.*;
 import middle.operand.symbol.*;
 
 public class Mul extends Binary{
-	public Mul(Operand opd0, Operand opd1, Operand res){
+	public Mul(Operand opd0, Operand opd1, Symbol res){
 		super(opd0, opd1, res);
 	}
 
@@ -19,13 +19,13 @@ public class Mul extends Binary{
 		Reg resReg;
 		if(opd0 instanceof Imm && opd1 instanceof Imm){
 			int val = ((Imm)opd0).val * ((Imm)opd1).val;
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			instrs.add(new Li(resReg, val));
 		}
 		else if(opd0 instanceof Imm || opd1 instanceof Imm){
 			int val = opd0 instanceof Imm? ((Imm)opd0).val: ((Imm)opd1).val;
 			Reg reg = regManager.getUse(opd0 instanceof Imm? (Var)opd1: (Var)opd0);
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			if(val == 0) instrs.add(new Li(resReg, 0));
 			else if(val == 1) instrs.add(new Move(resReg, reg));
 			else if(val == -1) instrs.add(new Sub(Reg.$zero, reg, resReg));
@@ -48,7 +48,7 @@ public class Mul extends Binary{
 		else{
 			Reg reg0 = regManager.getUse((Var)opd0);
 			Reg reg1 = regManager.getUse((Var)opd1);
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			instrs.add(new backend.mips.instr.rtype.Mul(reg0, reg1, resReg));
 		}
 	}

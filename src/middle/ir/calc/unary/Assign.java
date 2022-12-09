@@ -6,24 +6,23 @@ import middle.operand.*;
 import middle.operand.symbol.*;
 
 public class Assign extends Unary{
-	public Assign(Operand res, Operand opd0){ super(opd0, res); }
+	public Assign(Symbol res, Operand opd0){ super(opd0, res); }
 
 	@Override
 	public String toString(){ return res + " = " + opd0; }
 
 	@Override
 	public void genInstr(RegManager regManager){
-		assert res instanceof Symbol;
-		Reg lValReg;
+		Reg resReg;
 		if(opd0 instanceof Imm){
-			lValReg = regManager.getDef((Var)res);
-			instrs.add(new Li(lValReg, ((Imm)opd0).val));
+			resReg = regManager.getDef(res);
+			instrs.add(new Li(resReg, ((Imm)opd0).val));
 		}
 		else if(opd0 instanceof Var){
 			if(opd0.equals(res)) return;
-			Reg rValReg = regManager.getUse((Var)opd0);
-			lValReg = regManager.getDef((Var)res);
-			instrs.add(new Move(lValReg, rValReg));
+			Reg reg0 = regManager.getUse((Var)opd0);
+			resReg = regManager.getDef(res);
+			instrs.add(new Move(resReg, reg0));
 		}
 	}
 }

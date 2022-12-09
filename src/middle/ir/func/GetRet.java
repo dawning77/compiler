@@ -3,16 +3,15 @@ package middle.ir.func;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.ir.*;
-import middle.operand.Operand;
 import middle.operand.symbol.*;
 
 public class GetRet extends ICode{
-	public Operand res;
+	public Symbol res;
 
-	public GetRet(Operand res){
+	public GetRet(Symbol res){
 		super();
 		this.res = res;
-		def.add((Symbol)res);
+		def = res;
 	}
 
 	@Override
@@ -22,7 +21,7 @@ public class GetRet extends ICode{
 
 	@Override
 	public void genInstr(RegManager regManager){
-		Reg reg = regManager.getDef((Var)res);
+		Reg reg = regManager.getDef(res);
 		instrs.add(new Move(reg, Reg.$v0));
 	}
 }

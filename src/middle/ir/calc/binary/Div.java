@@ -15,7 +15,7 @@ import middle.operand.symbol.*;
 import java.util.*;
 
 public class Div extends Binary{
-	public Div(Operand opd0, Operand opd1, Operand res){
+	public Div(Operand opd0, Operand opd1, Symbol res){
 		super(opd0, opd1, res);
 	}
 
@@ -26,18 +26,18 @@ public class Div extends Binary{
 		Reg resReg;
 		if(opd0 instanceof Imm && opd1 instanceof Imm){
 			int val = ((Imm)opd0).val / ((Imm)opd1).val;
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			instrs.add(new Li(resReg, val));
 		}
 		else if(opd0 instanceof Imm){
 			int val0 = ((Imm)opd0).val;
 			if(val0 == 0){
-				resReg = regManager.getDef((Var)res);
+				resReg = regManager.getDef(res);
 				instrs.add(new Li(resReg, 0));
 			}
 			else{
 				reg1 = regManager.getUse((Var)opd1);
-				resReg = regManager.getDef((Var)res);
+				resReg = regManager.getDef(res);
 				instrs.add(new Li(resReg, ((Imm)opd0).val));
 				instrs.add(new backend.mips.instr.itype.Div(resReg, reg1));
 				instrs.add(new Mflo(resReg));
@@ -46,7 +46,7 @@ public class Div extends Binary{
 		else if(opd1 instanceof Imm){
 			int val1 = ((Imm)opd1).val;
 			reg0 = regManager.getUse((Var)opd0);
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			if(val1 == 1) instrs.add(new Move(resReg, reg0));
 			else if(val1 == -1) instrs.add(new Sub(Reg.$zero, reg0, resReg));
 			else if(Utils.isPowerOf2(Math.abs(val1))){
@@ -73,7 +73,7 @@ public class Div extends Binary{
 		else{
 			reg0 = regManager.getUse((Var)opd0);
 			reg1 = regManager.getUse((Var)opd1);
-			resReg = regManager.getDef((Var)res);
+			resReg = regManager.getDef(res);
 			instrs.add(new backend.mips.instr.itype.Div(reg0, reg1));
 			instrs.add(new Mflo(resReg));
 		}

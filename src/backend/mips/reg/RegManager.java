@@ -10,15 +10,15 @@ import java.util.stream.*;
 
 public class RegManager{
 	// a0, v0 cannot alloc
-		public static final LinkedHashSet<Reg> ALLOCATABLE = Stream.of(
-						Reg.$t0, Reg.$t1, Reg.$t2, Reg.$t3, Reg.$t4, Reg.$t5, Reg.$t6, Reg.$t7,
-						Reg.$s0, Reg.$s1, Reg.$s2, Reg.$s3, Reg.$s4, Reg.$s5, Reg.$s6, Reg.$s7,
-						Reg.$t8, Reg.$t9, Reg.$a1, Reg.$a2, Reg.$a3, Reg.$v1, Reg.$fp)
-				.collect(Collectors.toCollection(LinkedHashSet::new));
+	public static final LinkedHashSet<Reg> ALLOCATABLE = Stream.of(
+					Reg.$t0, Reg.$t1, Reg.$t2, Reg.$t3, Reg.$t4, Reg.$t5, Reg.$t6, Reg.$t7,
+					Reg.$s0, Reg.$s1, Reg.$s2, Reg.$s3, Reg.$s4, Reg.$s5, Reg.$s6, Reg.$s7,
+					Reg.$t8, Reg.$t9, Reg.$a1, Reg.$a2, Reg.$a3, Reg.$v1, Reg.$fp)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
 
-//	public static final LinkedHashSet<Reg> ALLOCATABLE = Stream.of(
-//					Reg.$t0, Reg.$t1, Reg.$t2, Reg.$t3)
-//			.collect(Collectors.toCollection(LinkedHashSet::new));
+	//	public static final LinkedHashSet<Reg> ALLOCATABLE = Stream.of(
+	//					Reg.$t0, Reg.$t1, Reg.$t2, Reg.$t3)
+	//			.collect(Collectors.toCollection(LinkedHashSet::new));
 
 	private LinkedHashSet<Reg> spare;
 	private LinkedHashMap<Reg, Symbol> used;
@@ -84,10 +84,8 @@ public class RegManager{
 		LinkedHashSet<Reg> used1 = new LinkedHashSet<>(used.keySet());
 		for(int i = curIdx; i < mipsManager.curBB.iCodes.size(); i++){
 			ICode curIR = mipsManager.curBB.iCodes.get(i);
-			for(Symbol sym: curIR.def){
-				used1.remove(vars.get(sym));
-				if(used1.size() == 1) for(Reg reg: used1){ return reg; }
-			}
+			used1.remove(vars.get(curIR.def));
+			if(used1.size() == 1) for(Reg reg: used1){ return reg; }
 			for(Symbol sym: curIR.use){
 				used1.remove(vars.get(sym));
 				if(used1.size() == 1) for(Reg reg: used1){ return reg; }

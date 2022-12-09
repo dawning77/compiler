@@ -8,12 +8,12 @@ import java.util.*;
 
 public abstract class ICode{
 	public HashSet<Symbol> use;
-	public HashSet<Symbol> def;
+	public Symbol def;
 	public ArrayList<Instr> instrs;
 
 	public ICode(){
 		this.use = new HashSet<>();
-		this.def = new HashSet<>();
+		this.def = null;
 		this.instrs = new ArrayList<>();
 	}
 

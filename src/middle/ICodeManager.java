@@ -165,10 +165,10 @@ public class ICodeManager{
 					info = new GlobalVarInfo(1, vals);
 					globalVars.put(sym, info);
 				}
-//				else{
-//					int initVal = calc.calc(constDef.constInitVal.constExp);
-//					addICode(new Assign(sym, new Imm(initVal)));
-//				}
+				//				else{
+				//					int initVal = calc.calc(constDef.constInitVal.constExp);
+				//					addICode(new Assign(sym, new Imm(initVal)));
+				//				}
 				break;
 			case 1:
 				int len = calc.calc(constDef.constExps.get(0));
@@ -525,7 +525,7 @@ public class ICodeManager{
 								res = new Imm(((ConstArr)sym).vals.get(((Imm)idx).val));
 							else{
 								res = genNewTmp();
-								addICode(new Load(sym, idx, res));
+								addICode(new Load(sym, idx, (Symbol)res));
 							}
 						}
 						break;
@@ -568,7 +568,7 @@ public class ICodeManager{
 								res = new Imm(((ConstMat)sym).vals.get(((Imm)outerIdx).val).get(((Imm)innerIdx).val));
 							else{
 								res = genNewTmp();
-								addICode(new Load(sym, idxx, res));
+								addICode(new Load(sym, idxx, (Symbol)res));
 							}
 						}
 						break;
@@ -611,7 +611,7 @@ public class ICodeManager{
 				}
 				else{
 					if(notCnt % 2 == 1){
-						Operand res = genNewTmp();
+						Symbol res = genNewTmp();
 						addICode(new Not(core, res));
 						return res;
 					}
@@ -632,7 +632,7 @@ public class ICodeManager{
 				}
 				else{
 					if(negCnt % 2 == 1){
-						Operand res = genNewTmp();
+						Symbol res = genNewTmp();
 						addICode(new Sub(new Imm(0), core, res));
 						return res;
 					}
@@ -648,7 +648,7 @@ public class ICodeManager{
 			addICode(new Call(unaryExp.ident.val));
 			//			changeCurBlock(follow);
 			if(funcNameMap.containsKey(name) && funcNameMap.get(name).retType.equals("int")){
-				Operand res = genNewTmp();
+				Symbol res = genNewTmp();
 				addICode(new GetRet(res));
 				return res;
 			}
@@ -682,7 +682,7 @@ public class ICodeManager{
 				else{
 					if(res == null) res = tmp;
 					else{
-						Operand newRes = genNewTmp();
+						Symbol newRes = genNewTmp();
 						addICode(new Mul(res, tmp, newRes));
 						res = newRes;
 					}
@@ -690,7 +690,7 @@ public class ICodeManager{
 			}
 			if(res != null){
 				if(val != 1){
-					Operand newRes = genNewTmp();
+					Symbol newRes = genNewTmp();
 					addICode(new Mul(res, new Imm(val), newRes));
 					res = newRes;
 				}
@@ -715,7 +715,7 @@ public class ICodeManager{
 					}
 				}
 				else{
-					Operand newRes = genNewTmp();
+					Symbol newRes = genNewTmp();
 					ICode iCode;
 					switch(mulExp.ops.get(i - 1)){
 						case MULT:
@@ -751,7 +751,7 @@ public class ICodeManager{
 				if(i == 0 || addExp.ops.get(i - 1).equals(PLUS)){
 					if(res == null) res = tmp;
 					else{
-						Operand newRes = genNewTmp();
+						Symbol newRes = genNewTmp();
 						addICode(new Add(res, tmp, newRes));
 						res = newRes;
 					}
@@ -759,11 +759,11 @@ public class ICodeManager{
 				else{
 					if(res == null){
 						res = genNewTmp();
-						addICode(new Sub(new Imm(val), tmp, res));
+						addICode(new Sub(new Imm(val), tmp, (Symbol)res));
 						val = 0;
 					}
 					else{
-						Operand newRes = genNewTmp();
+						Symbol newRes = genNewTmp();
 						addICode(new Sub(res, tmp, newRes));
 						res = newRes;
 					}
@@ -772,7 +772,7 @@ public class ICodeManager{
 		}
 		if(res != null){
 			if(val != 0){
-				Operand newRes = genNewTmp();
+				Symbol newRes = genNewTmp();
 				addICode(new Add(res, new Imm(val), newRes));
 				res = newRes;
 			}
@@ -877,7 +877,7 @@ public class ICodeManager{
 			opd1 = analyseRelExp(eqExp.relExps.get(i));
 			res = genNewTmp();
 			Rel rel = relMap.get(eqExp.ops.get(i - 1));
-			addICode(new Compare(opd0, opd1, res, rel));
+			addICode(new Compare(opd0, opd1, (Symbol)res, rel));
 			opd0 = res;
 		}
 		return res;
@@ -892,7 +892,7 @@ public class ICodeManager{
 			opd1 = analyseAddExp(relExp.addExps.get(i));
 			res = genNewTmp();
 			Rel rel = relMap.get(relExp.ops.get(i - 1));
-			addICode(new Compare(opd0, opd1, res, rel));
+			addICode(new Compare(opd0, opd1, (Symbol)res, rel));
 			opd0 = res;
 		}
 		return res;

@@ -1,10 +1,10 @@
 int main()
 {
-    int n;
-    n = getint();
+    int n = 666;
     int i = 19241027;
-    // only mod
-    if (n % 4 == 0)
-        printf("%d\n", i);
+    int j = 999;
+    int b;
+    b = n + i;
+    b = b;
     return 0;
 }

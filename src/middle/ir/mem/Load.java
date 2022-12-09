@@ -9,9 +9,9 @@ import middle.operand.*;
 import middle.operand.symbol.*;
 
 public class Load extends AccessMem{
-	public Load(Symbol sym, Operand idx, Operand val){
+	public Load(Symbol sym, Operand idx, Symbol val){
 		super(sym, idx, val);
-		def.add((Symbol)val);
+		def = val;
 		if(idx instanceof Symbol) use.add((Symbol)idx);
 		if(sym.type.equals(Symbol.Type.param)) use.add(sym);
 	}

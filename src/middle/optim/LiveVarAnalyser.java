@@ -3,6 +3,11 @@ package middle.optim;
 import middle.*;
 import middle.func.*;
 import middle.ir.*;
+import middle.ir.calc.binary.*;
+import middle.ir.calc.unary.*;
+import middle.ir.func.*;
+import middle.ir.io.*;
+import middle.ir.mem.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
@@ -49,10 +54,9 @@ public class LiveVarAnalyser{
 					if(!defBB.get(bb).contains(sym)) useBB.get(bb).add(sym);
 					if(!defIR.get(iCode).contains(sym)) useIR.get(iCode).add(sym);
 				});
-				iCode.def.forEach(sym->{
-					if(!useBB.get(bb).contains(sym)) defBB.get(bb).add(sym);
-					if(!useIR.get(iCode).contains(sym)) defIR.get(iCode).add(sym);
-				});
+				Symbol sym = iCode.def;
+				if(sym != null && !useBB.get(bb).contains(sym)) defBB.get(bb).add(sym);
+				if(sym != null && !useIR.get(iCode).contains(sym)) defIR.get(iCode).add(sym);
 			}
 		}
 		// gen out and in for bb
@@ -98,5 +102,54 @@ public class LiveVarAnalyser{
 	public boolean isLive(ICode iCode, Symbol sym){
 		if(!inIR.containsKey(iCode)) return false;
 		return Utils.union(useIR.get(iCode), outIR.get(iCode)).contains(sym);
+	}
+
+	public void deadCodeRemove(){
+		for(BasicBlock bb: func.bbs){
+			ArrayList<ICode> iCodes = new ArrayList<>(bb.iCodes);
+			for(ICode iCode: iCodes){
+				if(iCode instanceof Input) continue;
+				if(iCode instanceof Assign && ((Assign)iCode).opd0.equals(((Assign)iCode).res)){
+					bb.iCodes.remove(iCode);
+					continue;
+				}
+				if(defIR.containsKey(iCode)){
+					for(Symbol sym: defIR.get(iCode)){
+						if(!sym.type.equals(Symbol.Type.global) && !outIR.get(iCode).contains(sym)){
+							bb.iCodes.remove(iCode);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public void RedundantVarRemove(){
+		for(BasicBlock bb: func.bbs){
+			HashSet<ICode> toRemove = new HashSet<>();
+			for(int i = 0; i < bb.iCodes.size() - 1; i++){
+				ICode iCode = bb.iCodes.get(i);
+				if(bb.iCodes.get(i + 1) instanceof Assign){
+					Symbol def = iCode.def;
+					Symbol use = null;
+					Symbol def2 = null;
+					for(Symbol sym: bb.iCodes.get(i + 1).use){
+						use = sym;
+						def2 = bb.iCodes.get(i + 1).def;
+					}
+					if(def != null && def.equals(use)){
+						iCode.def = def2;
+						if(iCode instanceof Binary) ((Binary)iCode).res = def2;
+						else if(iCode instanceof Unary) ((Unary)iCode).res = def2;
+						else if(iCode instanceof GetRet) ((GetRet)iCode).res = def2;
+						else if(iCode instanceof Input) ((Input)iCode).res = def2;
+						else if(iCode instanceof Load) ((Load)iCode).val = def2;
+						toRemove.add(bb.iCodes.get(i + 1));
+						i++;
+					}
+				}
+			}
+			bb.iCodes.removeAll(toRemove);
+		}
 	}
 }

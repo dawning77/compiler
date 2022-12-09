@@ -28,7 +28,12 @@ public class MipsManager{
 
 	private final StringBuilder mips;
 	public String indent = "";
-	public static final boolean DEBUG = false;
+
+	public static final boolean DEBUG = true;
+	public static final boolean OUTPUT_ICODE = true;
+	public static final boolean OUTPUT_INSTR = false;
+	public static final boolean OUTPUT_REG = false;
+	public static final boolean OUTPUT_ACTIVE = true;
 
 	public MipsManager(ICodeManager iCodeManager){
 		this.funcNameMap = iCodeManager.funcNameMap;
@@ -83,7 +88,9 @@ public class MipsManager{
 
 	private void genFunc(FuncScope func){
 		curFunc = func;
+		func.liveVarAnalyser.RedundantVarRemove();
 		func.liveVarAnalyser.liveVarAnalyse();
+		func.liveVarAnalyser.deadCodeRemove();
 		regManager.init();
 		globalVars.keySet().forEach(regManager::addToStack);
 		func.params.forEach(regManager::addToStack);
@@ -100,15 +107,15 @@ public class MipsManager{
 
 	private void genInstr(ICode iCode){
 		curIR = iCode;
-		if(DEBUG) System.out.println('\n' + iCode.toString());
+		if(DEBUG && OUTPUT_ICODE) System.out.println('\n' + iCode.toString());
 		iCode.genInstr(regManager);
 		iCode.instrs.forEach(this::genInstr);
-		if(DEBUG) System.out.println(regManager);
-		if(DEBUG) System.out.println(curFunc.liveVarAnalyser.getOutput(iCode));
+		if(DEBUG && OUTPUT_REG) System.out.println(regManager);
+		if(DEBUG && OUTPUT_ACTIVE) System.out.println(curFunc.liveVarAnalyser.getOutput(iCode));
 	}
 
 	public void genInstr(Instr instr){
-		if(DEBUG) System.out.println(instr);
+		if(DEBUG && OUTPUT_INSTR) System.out.println(instr);
 		if(!(instr instanceof Label)) mips.append('\t');
 		mips.append(indent).append(instr).append('\n');
 	}
