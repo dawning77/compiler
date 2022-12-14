@@ -9,6 +9,7 @@ import backend.mips.reg.*;
 import middle.*;
 import middle.func.*;
 import middle.ir.*;
+import middle.ir.func.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
@@ -29,11 +30,11 @@ public class MipsManager{
 	private final StringBuilder mips;
 	public String indent = "";
 
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	public static final boolean OUTPUT_ICODE = true;
-	public static final boolean OUTPUT_INSTR = false;
-	public static final boolean OUTPUT_REG = false;
-	public static final boolean OUTPUT_ACTIVE = true;
+	public static final boolean OUTPUT_INSTR = true;
+	public static final boolean OUTPUT_REG = true;
+	public static final boolean OUTPUT_ACTIVE = false;
 
 	public MipsManager(ICodeManager iCodeManager){
 		this.funcNameMap = iCodeManager.funcNameMap;
@@ -88,16 +89,17 @@ public class MipsManager{
 
 	private void genFunc(FuncScope func){
 		curFunc = func;
-		func.liveVarAnalyser.RedundantVarRemove();
-		func.liveVarAnalyser.liveVarAnalyse();
-		func.liveVarAnalyser.deadCodeRemove();
-		regManager.init();
+		regManager.globalRegManager.init();
+		regManager.globalRegManager.allocGlobalReg(func.liveVarAnalyser);
+		regManager.tmpRegManager.init();
 		globalVars.keySet().forEach(regManager::addToStack);
 		func.params.forEach(regManager::addToStack);
 		genInstr(new middle.ir.Label(curFunc.name));
 		genInstr(new middle.ir.Label("# param begin from " + curFunc.frameSize * 4));
 		genInstr(new Addi(Reg.$sp, Reg.$sp,
 		                  -(curFunc.frameSize + curFunc.paramSize + 1) * 4));
+		func.liveVarAnalyser.outIR.get(func.bbs.get(0).iCodes.get(0)).
+				forEach(regManager.globalRegManager::load);
 		for(BasicBlock bb: func.bbs){
 			curBB = bb;
 			curBB.iCodes.forEach(this::genInstr);
@@ -110,6 +112,9 @@ public class MipsManager{
 		if(DEBUG && OUTPUT_ICODE) System.out.println('\n' + iCode.toString());
 		iCode.genInstr(regManager);
 		iCode.instrs.forEach(this::genInstr);
+		if(iCode instanceof Call)
+			curFunc.liveVarAnalyser.outIR.get(iCode).
+				forEach(regManager.globalRegManager::load);
 		if(DEBUG && OUTPUT_REG) System.out.println(regManager);
 		if(DEBUG && OUTPUT_ACTIVE) System.out.println(curFunc.liveVarAnalyser.getOutput(iCode));
 	}

@@ -1,5 +1,6 @@
 package middle.func;
 
+import middle.ir.*;
 import middle.operand.symbol.*;
 import middle.optim.*;
 
@@ -17,6 +18,7 @@ public class FuncScope{
 	public int frameSize;
 	public int paramSize;
 
+	public FuncOptimizer funcOptimizer;
 	public LiveVarAnalyser liveVarAnalyser;
 
 	public FuncScope(String name, String retType){
@@ -29,6 +31,7 @@ public class FuncScope{
 		this.params = new ArrayList<>();
 		this.locals = new ArrayList<>();
 		this.tmps = new ArrayList<>();
+		this.funcOptimizer = new FuncOptimizer(this);
 		this.liveVarAnalyser = new LiveVarAnalyser(this);
 	}
 
@@ -45,5 +48,16 @@ public class FuncScope{
 			param.loc = frameSize + paramSize;
 			paramSize += 1;
 		}
+	}
+
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		for(BasicBlock bb: bbs){
+			sb.append(new Label(name)).append('\n');
+			for(ICode iCode: bb.iCodes){ sb.append(iCode).append('\n'); }
+		}
+		sb.append('\n');
+		return sb.toString();
 	}
 }

@@ -24,8 +24,10 @@ public class Sub extends Binary{
 		else if(opd0 instanceof Imm){
 			reg1 = regManager.getUse((Var)opd1);
 			resReg = regManager.getDef(res);
-			instrs.add(new Li(resReg, ((Imm)opd0).val));
-			instrs.add(new backend.mips.instr.rtype.Sub(resReg, reg1, resReg));
+			Reg tar = Reg.$v0;
+			if(((Imm)opd0).val == 0) tar = Reg.$zero;
+			else instrs.add(new Li(tar, ((Imm)opd0).val));
+			instrs.add(new backend.mips.instr.rtype.Sub(tar, reg1, resReg));
 		}
 		else if(opd1 instanceof Imm){
 			reg0 = regManager.getUse((Var)opd0);

@@ -38,18 +38,18 @@ public class Br extends ICode{
 	public void genInstr(RegManager regManager){
 		if(rel == null){
 			if(opd0 instanceof Imm){
-				regManager.setAllSpare();
+				regManager.setAllTmpRegSpare();
 				if((((Imm)opd0).val == 0) == inv) instrs.add(new J(bb.toString()));
 			}
 			else if(opd0 instanceof Var){
 				Reg reg = regManager.getUse((Var)opd0);
 				if(((Var)opd0).type.equals(Symbol.Type.tmp)) regManager.setAllSpareExcept(reg);
-				else regManager.setAllSpare();
+				else regManager.setAllTmpRegSpare();
 				rel = inv? Rel.eq: Rel.eq.inverse();
 				instrs.add(new backend.mips.instr.pseudo.Br(reg, Reg.$zero, rel, bb.toString()));
 				if(((Var)opd0).type.equals(Symbol.Type.tmp)){
 					regManager.setSpareNoStore(reg);
-					regManager.initSapre();
+					regManager.tmpRegManager.initSpare();
 				}
 			}
 		}

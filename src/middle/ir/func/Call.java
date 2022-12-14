@@ -19,7 +19,8 @@ public class Call extends ICode{
 
 	@Override
 	public void genInstr(RegManager regManager){
-		regManager.setAllSpare();
+		regManager.setAllTmpRegSpare();
+		regManager.setAllGlobalRegSpare();
 		instrs.add(new Jal(funcName));
 		FuncScope func = regManager.mipsManager.funcNameMap.get(funcName);
 		instrs.add(new Addi(Reg.$sp, Reg.$sp, (func.frameSize + func.paramSize + 1) * 4));

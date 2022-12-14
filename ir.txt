@@ -1,0 +1,17 @@
+main:
+b0:
+_t0 = Input()
+n_v1 = _t0
+i_v1 = 19241027
+_t1 = n_v1 Mod 4
+_t2 = _t1 eq 0
+IfNot _t2 goto b2
+main:
+b1:
+Output i_v1
+Output str0
+SetAllSpare
+main:
+b2:
+Ret 0
+

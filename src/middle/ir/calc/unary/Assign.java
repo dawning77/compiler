@@ -22,7 +22,7 @@ public class Assign extends Unary{
 			if(opd0.equals(res)) return;
 			Reg reg0 = regManager.getUse((Var)opd0);
 			resReg = regManager.getDef(res);
-			instrs.add(new Move(resReg, reg0));
+			if(!reg0.equals(resReg)) instrs.add(new Move(resReg, reg0));
 		}
 	}
 }

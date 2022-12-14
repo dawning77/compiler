@@ -12,5 +12,5 @@ public class SetAllSpare extends ICode{
 	public String toString(){ return "SetAllSpare"; }
 
 	@Override
-	public void genInstr(RegManager regManager){ regManager.setAllSpare(); }
+	public void genInstr(RegManager regManager){ regManager.setAllTmpRegSpare(); }
 }

@@ -3,6 +3,7 @@ import frontend.Lexer;
 import frontend.Logger;
 import frontend.Parser;
 import middle.*;
+import middle.optim.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -16,6 +17,7 @@ public class Compiler{
 	private static Parser parser;
 	private static Logger logger;
 	private static ICodeManager iCodeManager;
+	private static GlobalOptimizer globalOptimizer;
 	private static MipsManager mipsManager;
 
 	public static final boolean OUTPUT_AST = false;
@@ -67,6 +69,9 @@ public class Compiler{
 		iCodeManager = new ICodeManager();
 		iCodeManager.analyseCompUnit(parser.compUnit);
 		if(OUTPUT_ICODE){ writeFile("ir.txt", iCodeManager.getICodes()); }
+
+		globalOptimizer = new GlobalOptimizer(iCodeManager);
+		globalOptimizer.optimize();
 
 		mipsManager = new MipsManager(iCodeManager);
 		mipsManager.genMips();

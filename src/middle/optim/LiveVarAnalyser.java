@@ -3,27 +3,26 @@ package middle.optim;
 import middle.*;
 import middle.func.*;
 import middle.ir.*;
-import middle.ir.calc.binary.*;
 import middle.ir.calc.unary.*;
-import middle.ir.func.*;
 import middle.ir.io.*;
-import middle.ir.mem.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
 
 
 public class LiveVarAnalyser{
-	private final FuncScope func;
-	private final HashMap<BasicBlock, HashSet<Symbol>> defBB;
-	private final HashMap<BasicBlock, HashSet<Symbol>> useBB;
-	private final HashMap<BasicBlock, HashSet<Symbol>> inBB;
-	private final HashMap<BasicBlock, HashSet<Symbol>> outBB;
+	public final FuncScope func;
+	public final HashMap<BasicBlock, HashSet<Symbol>> defBB;
+	public final HashMap<BasicBlock, HashSet<Symbol>> useBB;
+	public final HashMap<BasicBlock, HashSet<Symbol>> inBB;
+	public final HashMap<BasicBlock, HashSet<Symbol>> outBB;
 
-	private final HashMap<ICode, HashSet<Symbol>> defIR;
-	private final HashMap<ICode, HashSet<Symbol>> useIR;
-	private final HashMap<ICode, HashSet<Symbol>> inIR;
-	private final HashMap<ICode, HashSet<Symbol>> outIR;
+	public final HashMap<ICode, HashSet<Symbol>> defIR;
+	public final HashMap<ICode, HashSet<Symbol>> useIR;
+	public final HashMap<ICode, HashSet<Symbol>> inIR;
+	public final HashMap<ICode, HashSet<Symbol>> outIR;
+
+	public final HashMap<Symbol, Integer> refCnt;
 
 	public LiveVarAnalyser(FuncScope func){
 		this.func = func;
@@ -35,6 +34,7 @@ public class LiveVarAnalyser{
 		this.useIR = new HashMap<>();
 		this.inIR = new HashMap<>();
 		this.outIR = new HashMap<>();
+		this.refCnt = new HashMap<>();
 	}
 
 	// contains all vars and param arr/mat
@@ -53,10 +53,16 @@ public class LiveVarAnalyser{
 				iCode.use.forEach(sym->{
 					if(!defBB.get(bb).contains(sym)) useBB.get(bb).add(sym);
 					if(!defIR.get(iCode).contains(sym)) useIR.get(iCode).add(sym);
+					if(refCnt.containsKey(sym)) refCnt.put(sym, refCnt.get(sym) + 1);
+					else refCnt.put(sym, 1);
 				});
 				Symbol sym = iCode.def;
-				if(sym != null && !useBB.get(bb).contains(sym)) defBB.get(bb).add(sym);
-				if(sym != null && !useIR.get(iCode).contains(sym)) defIR.get(iCode).add(sym);
+				if(sym!=null){
+					if(!useBB.get(bb).contains(sym)) defBB.get(bb).add(sym);
+					if(!useIR.get(iCode).contains(sym)) defIR.get(iCode).add(sym);
+					if(refCnt.containsKey(sym)) refCnt.put(sym, refCnt.get(sym) + 1);
+					else refCnt.put(sym, 1);
+				}
 			}
 		}
 		// gen out and in for bb
@@ -121,35 +127,6 @@ public class LiveVarAnalyser{
 					}
 				}
 			}
-		}
-	}
-
-	public void RedundantVarRemove(){
-		for(BasicBlock bb: func.bbs){
-			HashSet<ICode> toRemove = new HashSet<>();
-			for(int i = 0; i < bb.iCodes.size() - 1; i++){
-				ICode iCode = bb.iCodes.get(i);
-				if(bb.iCodes.get(i + 1) instanceof Assign){
-					Symbol def = iCode.def;
-					Symbol use = null;
-					Symbol def2 = null;
-					for(Symbol sym: bb.iCodes.get(i + 1).use){
-						use = sym;
-						def2 = bb.iCodes.get(i + 1).def;
-					}
-					if(def != null && def.equals(use)){
-						iCode.def = def2;
-						if(iCode instanceof Binary) ((Binary)iCode).res = def2;
-						else if(iCode instanceof Unary) ((Unary)iCode).res = def2;
-						else if(iCode instanceof GetRet) ((GetRet)iCode).res = def2;
-						else if(iCode instanceof Input) ((Input)iCode).res = def2;
-						else if(iCode instanceof Load) ((Load)iCode).val = def2;
-						toRemove.add(bb.iCodes.get(i + 1));
-						i++;
-					}
-				}
-			}
-			bb.iCodes.removeAll(toRemove);
 		}
 	}
 }

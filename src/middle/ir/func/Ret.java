@@ -21,7 +21,7 @@ public class Ret extends ICode{
 
 	@Override
 	public void genInstr(RegManager regManager){
-		regManager.setAllGlobalSpare();
+		regManager.setAllGlobalVarSpare();
 		if(opd0 != null){
 			if(opd0 instanceof Imm){
 				instrs.add(new Li(Reg.$v0, ((Imm)opd0).val));

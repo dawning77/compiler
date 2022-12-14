@@ -35,13 +35,16 @@ public class Mul extends Binary{
 			}
 			else if(Utils.isPowerOf2(Math.abs(val - 1))){
 				instrs.add(new Sll(reg, resReg, Utils.log2I(Math.abs(val - 1))));
-				instrs.add(new Add(resReg, reg, resReg));
-				if(val < 0) instrs.add(new Sub(Reg.$zero, resReg, resReg));
+				if(val - 1 < 0) instrs.add(new Sub(reg, resReg, resReg));
+				else instrs.add(new Add(resReg, reg, resReg));
 			}
 			else if(Utils.isPowerOf2(Math.abs(val + 1))){
 				instrs.add(new Sll(reg, resReg, Utils.log2I(Math.abs(val + 1))));
-				instrs.add(new Sub(resReg, reg, resReg));
-				if(val < 0) instrs.add(new Sub(Reg.$zero, resReg, resReg));
+				if(val + 1 < 0){
+					instrs.add(new Sub(Reg.$zero, resReg, resReg));
+					instrs.add(new Sub(resReg, reg, resReg));
+				}
+				else instrs.add(new Sub(resReg, reg, resReg));
 			}
 			else instrs.add(new backend.mips.instr.itype.Mul(reg, resReg, val));
 		}

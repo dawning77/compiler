@@ -33,7 +33,7 @@ public class Push extends ICode{
 	}
 
 	@Override
-	public String toString(){ return "Push params"; }
+	public String toString(){ return "Push "+ params.toString(); }
 
 	@Override
 	public void genInstr(RegManager regManager){

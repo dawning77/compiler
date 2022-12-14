@@ -38,8 +38,8 @@ public class Div extends Binary{
 			else{
 				reg1 = regManager.getUse((Var)opd1);
 				resReg = regManager.getDef(res);
-				instrs.add(new Li(resReg, ((Imm)opd0).val));
-				instrs.add(new backend.mips.instr.itype.Div(resReg, reg1));
+				instrs.add(new Li(Reg.$v0, ((Imm)opd0).val));
+				instrs.add(new backend.mips.instr.itype.Div(Reg.$v0, reg1));
 				instrs.add(new Mflo(resReg));
 			}
 		}

@@ -23,13 +23,7 @@ import middle.operand.symbol.*;
 
 import java.util.*;
 
-import static frontend.token.TokenType.EQL;
-import static frontend.token.TokenType.GEQ;
-import static frontend.token.TokenType.GRE;
-import static frontend.token.TokenType.LEQ;
-import static frontend.token.TokenType.LSS;
-import static frontend.token.TokenType.NEQ;
-import static frontend.token.TokenType.PLUS;
+import static frontend.token.TokenType.*;
 import static middle.operand.symbol.Symbol.Type.global;
 import static middle.operand.symbol.Symbol.Type.local;
 import static middle.operand.symbol.Symbol.Type.param;
@@ -41,7 +35,7 @@ public class ICodeManager{
 	public FuncScope mainFunc;
 	public final HashMap<String, Integer> strs;
 	public final HashMap<Symbol, GlobalVarInfo> globalVars;
-	private final StringBuilder iCodes;
+	private StringBuilder iCodes;
 
 	private int blockCnt;
 	private int strCnt;
@@ -57,8 +51,11 @@ public class ICodeManager{
 
 	private final Calculator calc;
 
+	public static final boolean CONST_PROP = true;
+	private HashMap<Var, Integer> valMap;
+
 	public ICodeManager(){
-		iCodes = new StringBuilder();
+		iCodes = null;
 		funcNameMap = new HashMap<>();
 		funcs = new ArrayList<>();
 		mainFunc = null;
@@ -75,6 +72,7 @@ public class ICodeManager{
 		loopFollows = new Stack<>();
 		loopConds = new Stack<>();
 		calc = new Calculator();
+		valMap = new HashMap<>();
 	}
 
 	private void check(boolean assertion){
@@ -113,14 +111,19 @@ public class ICodeManager{
 			else genLink(curBlock, follow);
 		}
 		curBlock = follow;
+		valMap = new HashMap<>();
 	}
 
-	private void addICode(ICode icode){
-		curBlock.add(icode);
-		iCodes.append(icode).append('\n');
-	}
+	private void addICode(ICode icode){ curBlock.add(icode); }
 
-	public String getICodes(){ return iCodes.toString(); }
+	public String getICodes(){
+		if(iCodes == null){
+			iCodes = new StringBuilder();
+			iCodes.append(mainFunc);
+			funcs.forEach(f->iCodes.append(f));
+		}
+		return iCodes.toString();
+	}
 
 	private int addStr(String str){
 		if(strs.containsKey(str)) return strs.get(str);
@@ -165,10 +168,6 @@ public class ICodeManager{
 					info = new GlobalVarInfo(1, vals);
 					globalVars.put(sym, info);
 				}
-				//				else{
-				//					int initVal = calc.calc(constDef.constInitVal.constExp);
-				//					addICode(new Assign(sym, new Imm(initVal)));
-				//				}
 				break;
 			case 1:
 				int len = calc.calc(constDef.constExps.get(0));
@@ -267,6 +266,7 @@ public class ICodeManager{
 					if(varDef.initVal != null){
 						Operand initVal = analyseExp(varDef.initVal.exp);
 						addICode(new Assign(sym, initVal));
+						if(initVal instanceof Imm) valMap.put((Var)sym, ((Imm)initVal).val);
 					}
 				}
 				break;
@@ -342,6 +342,7 @@ public class ICodeManager{
 	// FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
 	private void analyseFuncDef(FuncDef funcDef){
 		curBlock = genNewBlock();
+		valMap = new HashMap<>();
 		genNewFunc(funcDef.ident.val,
 		           funcDef.funcType.equals(TokenType.VOIDTK)? "void": "int",
 		           analyseFuncFParams(funcDef.funcFParams),
@@ -352,6 +353,7 @@ public class ICodeManager{
 	// MainFuncDef → 'int' 'main' '(' ')' Block
 	private void analyseMainFuncDef(MainFuncDef mainFuncDef){
 		curBlock = genNewBlock();
+		valMap = new HashMap<>();
 		genNewFunc("main",
 		           "int",
 		           new LinkedHashMap<>(),
@@ -367,7 +369,6 @@ public class ICodeManager{
 		isGlobal = false;
 		analyseFuncBody(funcBody, funcFParams);
 		if(!curFunc.hasLastReturn) addICode(new Ret(null));
-		iCodes.append('\n');
 		curFunc.formFrame();
 	}
 
@@ -505,9 +506,12 @@ public class ICodeManager{
 			case 0:
 				if(mode.equals("store")){
 					addICode(new Assign(sym, val));
+					if(val instanceof Imm) valMap.put((Var)sym, ((Imm)val).val);
+					else valMap.remove((Var)sym);
 				}
 				else if(mode.equals("load")){
 					if(isConst) res = new Imm(((ConstVar)sym).val);
+					else if(CONST_PROP && valMap.containsKey((Var)sym)) res = new Imm(valMap.get((Var)sym));
 					else res = sym;
 				}
 				break;
@@ -682,7 +686,7 @@ public class ICodeManager{
 				else{
 					if(res == null) res = tmp;
 					else{
-						Symbol newRes = genNewTmp();
+						Var newRes = genNewTmp();
 						addICode(new Mul(res, tmp, newRes));
 						res = newRes;
 					}
@@ -690,7 +694,7 @@ public class ICodeManager{
 			}
 			if(res != null){
 				if(val != 1){
-					Symbol newRes = genNewTmp();
+					Var newRes = genNewTmp();
 					addICode(new Mul(res, new Imm(val), newRes));
 					res = newRes;
 				}
@@ -715,15 +719,19 @@ public class ICodeManager{
 					}
 				}
 				else{
-					Symbol newRes = genNewTmp();
+					assert res != null;
+					Var newRes = genNewTmp();
 					ICode iCode;
 					switch(mulExp.ops.get(i - 1)){
 						case MULT:
-							iCode = new Mul(res, tmp, newRes); break;
+							iCode = new Mul(res, tmp, newRes);
+							break;
 						case DIV:
-							iCode = new Div(res, tmp, newRes); break;
+							iCode = new Div(res, tmp, newRes);
+							break;
 						case MOD:
-							iCode = new Mod(res, tmp, newRes); break;
+							iCode = new Mod(res, tmp, newRes);
+							break;
 						default:
 							iCode = null;
 					}

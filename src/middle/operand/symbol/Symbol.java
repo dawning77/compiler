@@ -2,6 +2,8 @@ package middle.operand.symbol;
 
 import middle.operand.Operand;
 
+import java.util.*;
+
 public abstract class Symbol implements Operand{
 	public final String name;
 	public final Type type;
@@ -21,4 +23,15 @@ public abstract class Symbol implements Operand{
 
 	@Override
 	public String toString(){ return name; }
+
+	@Override
+	public boolean equals(Object o){
+		if(this == o) return true;
+		if(o == null || getClass() != o.getClass()) return false;
+		Symbol symbol = (Symbol)o;
+		return name.equals(symbol.name);
+	}
+
+	@Override
+	public int hashCode(){ return Objects.hash(name); }
 }

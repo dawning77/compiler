@@ -18,7 +18,7 @@ public class Jmp extends ICode{
 
 	@Override
 	public void genInstr(RegManager regManager){
-		regManager.setAllSpare();
+		regManager.setAllTmpRegSpare();
 		instrs.add(new J(bb.toString()));
 	}
 }
