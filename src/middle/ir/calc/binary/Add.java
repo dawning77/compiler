@@ -10,6 +10,13 @@ public class Add extends Binary{
 	public Add(Operand opd0, Operand opd1, Symbol res){ super(opd0, opd1, res); }
 
 	@Override
+	public Integer calc(){
+		if(opd0 instanceof Imm && opd1 instanceof Imm)
+			return ((Imm)opd0).val + ((Imm)opd1).val;
+		else return null;
+	}
+
+	@Override
 	public void genInstr(RegManager regManager){
 		Reg reg0;
 		Reg reg1;

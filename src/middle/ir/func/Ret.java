@@ -7,6 +7,8 @@ import middle.ir.*;
 import middle.operand.*;
 import middle.operand.symbol.*;
 
+import java.util.*;
+
 public class Ret extends ICode{
 	public Operand opd0;
 
@@ -15,6 +17,18 @@ public class Ret extends ICode{
 		this.opd0 = opd0;
 		if(opd0 instanceof Symbol) use.add((Symbol)opd0);
 	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){
+		if(opd0 instanceof Symbol && opd0.equals(oldUse)) {
+			opd0 = newUse;
+			use = new HashSet<>();
+			if(opd0 instanceof Symbol) use.add((Symbol)opd0);
+		}
+	}
+
+	@Override
+	public void changeDef(Symbol newDef){ }
 
 	@Override
 	public String toString(){ return "Ret " + opd0; }

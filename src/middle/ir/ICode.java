@@ -2,6 +2,7 @@ package middle.ir;
 
 import backend.mips.instr.*;
 import backend.mips.reg.*;
+import middle.operand.*;
 import middle.operand.symbol.*;
 
 import java.util.*;
@@ -21,4 +22,8 @@ public abstract class ICode{
 	abstract public String toString();
 
 	abstract public void genInstr(RegManager regManager);
+
+	abstract public void changeUse(Symbol oldUse, Operand newUse);
+
+	abstract public void changeDef(Symbol newDef);
 }

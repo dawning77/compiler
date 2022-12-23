@@ -1,5 +1,6 @@
 package middle.func;
 
+import middle.*;
 import middle.ir.*;
 import middle.operand.symbol.*;
 import middle.optim.*;
@@ -20,6 +21,7 @@ public class FuncScope{
 
 	public FuncOptimizer funcOptimizer;
 	public LiveVarAnalyser liveVarAnalyser;
+	public ArrayList<LoopInfo> loopInfos;
 
 	public FuncScope(String name, String retType){
 		this.name = name;
@@ -33,6 +35,7 @@ public class FuncScope{
 		this.tmps = new ArrayList<>();
 		this.funcOptimizer = new FuncOptimizer(this);
 		this.liveVarAnalyser = new LiveVarAnalyser(this);
+		this.loopInfos = new ArrayList<>();
 	}
 
 	public void formFrame(){
@@ -53,8 +56,8 @@ public class FuncScope{
 	@Override
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
+		sb.append(new Label(name)).append('\n');
 		for(BasicBlock bb: bbs){
-			sb.append(new Label(name)).append('\n');
 			for(ICode iCode: bb.iCodes){ sb.append(iCode).append('\n'); }
 		}
 		sb.append('\n');

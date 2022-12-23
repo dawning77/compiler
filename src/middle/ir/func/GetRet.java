@@ -3,6 +3,7 @@ package middle.ir.func;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.ir.*;
+import middle.operand.*;
 import middle.operand.symbol.*;
 
 public class GetRet extends ICode{
@@ -11,6 +12,15 @@ public class GetRet extends ICode{
 	public GetRet(Symbol res){
 		super();
 		this.res = res;
+		def = res;
+	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){ }
+
+	@Override
+	public void changeDef(Symbol newDef){
+		res = newDef;
 		def = res;
 	}
 

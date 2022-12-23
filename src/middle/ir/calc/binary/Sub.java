@@ -12,6 +12,13 @@ public class Sub extends Binary{
 	}
 
 	@Override
+	public Integer calc(){
+		if(opd0 instanceof Imm && opd1 instanceof Imm)
+			return ((Imm)opd0).val - ((Imm)opd1).val;
+		else return null;
+	}
+
+	@Override
 	public void genInstr(RegManager regManager){
 		Reg reg0;
 		Reg reg1;

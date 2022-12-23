@@ -8,10 +8,29 @@ import backend.mips.reg.*;
 import middle.operand.*;
 import middle.operand.symbol.*;
 
+import java.util.*;
+
 public class Load extends AccessMem{
 	public Load(Symbol sym, Operand idx, Symbol val){
 		super(sym, idx, val);
-		def = val;
+		genUseDef();
+	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){
+		if(idx instanceof Symbol && idx.equals(oldUse)) idx = newUse;
+		genUseDef();
+	}
+
+	@Override
+	public void changeDef(Symbol newDef){
+		val = newDef;
+		genUseDef();
+	}
+
+	private void genUseDef(){
+		def = (Symbol)val;
+		use = new HashSet<>();
 		if(idx instanceof Symbol) use.add((Symbol)idx);
 		if(sym.type.equals(Symbol.Type.param)) use.add(sym);
 	}

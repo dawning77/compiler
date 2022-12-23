@@ -30,10 +30,10 @@ public class MipsManager{
 	private final StringBuilder mips;
 	public String indent = "";
 
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 	public static final boolean OUTPUT_ICODE = true;
-	public static final boolean OUTPUT_INSTR = true;
-	public static final boolean OUTPUT_REG = true;
+	public static final boolean OUTPUT_INSTR = false;
+	public static final boolean OUTPUT_REG = false;
 	public static final boolean OUTPUT_ACTIVE = false;
 
 	public MipsManager(ICodeManager iCodeManager){
@@ -109,7 +109,7 @@ public class MipsManager{
 
 	private void genInstr(ICode iCode){
 		curIR = iCode;
-		if(DEBUG && OUTPUT_ICODE) System.out.println('\n' + iCode.toString());
+		if(DEBUG && OUTPUT_ICODE) System.out.println(iCode.toString());
 		iCode.genInstr(regManager);
 		iCode.instrs.forEach(this::genInstr);
 		if(iCode instanceof Call)

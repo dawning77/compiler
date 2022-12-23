@@ -8,9 +8,26 @@ import backend.mips.reg.*;
 import middle.operand.*;
 import middle.operand.symbol.*;
 
+import java.util.*;
+
 public class Store extends AccessMem{
 	public Store(Symbol sym, Operand idx, Operand val){
 		super(sym, idx, val);
+		genUseDef();
+	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){
+		if(idx instanceof Symbol && idx.equals(oldUse)) idx = newUse;
+		if(val instanceof Symbol && val.equals(oldUse)) val = newUse;
+		genUseDef();
+	}
+
+	@Override
+	public void changeDef(Symbol newDef){ }
+
+	private void genUseDef(){
+		use = new HashSet<>();
 		if(val instanceof Symbol) use.add((Symbol)val);
 		if(idx instanceof Symbol) use.add((Symbol)idx);
 		if(sym.type.equals(Symbol.Type.param)) use.add(sym);

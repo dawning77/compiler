@@ -76,11 +76,11 @@ public class GlobalRegManager{
 				for(int i = 0; i < vars.size(); i++){
 					if(!conflicts.containsKey(vars.get(i))){
 						conflicts.put(vars.get(i), new HashSet<>());
-						if(conflicts.size()>800){
+						if(conflicts.size() > 800){
 							// points count reach the limit, use the refCnt
-							int curIdx = refCnt.size()-1;
+							int curIdx = refCnt.size() - 1;
 							for(Reg reg: RegManager.GLOBAL_REG){
-								regMap.put(refCnt.get(curIdx).getKey(),reg);
+								regMap.put(refCnt.get(curIdx).getKey(), reg);
 								curIdx--;
 							}
 							return;

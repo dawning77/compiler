@@ -15,6 +15,13 @@ public class Mul extends Binary{
 	}
 
 	@Override
+	public Integer calc(){
+		if(opd0 instanceof Imm && opd1 instanceof Imm)
+			return ((Imm)opd0).val * ((Imm)opd1).val;
+		else return null;
+	}
+
+	@Override
 	public void genInstr(RegManager regManager){
 		Reg resReg;
 		if(opd0 instanceof Imm && opd1 instanceof Imm){
@@ -34,17 +41,17 @@ public class Mul extends Binary{
 				if(val < 0) instrs.add(new Sub(Reg.$zero, resReg, resReg));
 			}
 			else if(Utils.isPowerOf2(Math.abs(val - 1))){
-				instrs.add(new Sll(reg, resReg, Utils.log2I(Math.abs(val - 1))));
-				if(val - 1 < 0) instrs.add(new Sub(reg, resReg, resReg));
-				else instrs.add(new Add(resReg, reg, resReg));
+				instrs.add(new Sll(reg, Reg.$v0, Utils.log2I(Math.abs(val - 1))));
+				if(val - 1 < 0) instrs.add(new Sub(reg, Reg.$v0, resReg));
+				else instrs.add(new Add(reg, Reg.$v0, resReg));
 			}
 			else if(Utils.isPowerOf2(Math.abs(val + 1))){
-				instrs.add(new Sll(reg, resReg, Utils.log2I(Math.abs(val + 1))));
+				instrs.add(new Sll(reg, Reg.$v0, Utils.log2I(Math.abs(val + 1))));
 				if(val + 1 < 0){
-					instrs.add(new Sub(Reg.$zero, resReg, resReg));
-					instrs.add(new Sub(resReg, reg, resReg));
+					instrs.add(new Sub(Reg.$zero, Reg.$v0, Reg.$v0));
+					instrs.add(new Sub(Reg.$v0, reg, resReg));
 				}
-				else instrs.add(new Sub(resReg, reg, resReg));
+				else instrs.add(new Sub(Reg.$v0, reg, resReg));
 			}
 			else instrs.add(new backend.mips.instr.itype.Mul(reg, resReg, val));
 		}

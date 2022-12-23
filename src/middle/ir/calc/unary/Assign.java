@@ -9,6 +9,12 @@ public class Assign extends Unary{
 	public Assign(Symbol res, Operand opd0){ super(opd0, res); }
 
 	@Override
+	public Integer calc(){
+		if(opd0 instanceof Imm) return ((Imm)opd0).val;
+		else return null;
+	}
+
+	@Override
 	public String toString(){ return res + " = " + opd0; }
 
 	@Override

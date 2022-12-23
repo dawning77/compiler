@@ -4,6 +4,7 @@ import backend.mips.instr.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.ir.*;
+import middle.operand.*;
 import middle.operand.symbol.*;
 
 public class Input extends ICode{
@@ -12,6 +13,15 @@ public class Input extends ICode{
 	public Input(Symbol res){
 		super();
 		this.res = res;
+		def = res;
+	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){ }
+
+	@Override
+	public void changeDef(Symbol newDef){
+		res = newDef;
 		def = res;
 	}
 

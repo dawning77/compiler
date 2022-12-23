@@ -1,17 +1,94 @@
 main:
 b0:
+i_v1 = -65
 _t0 = Input()
-n_v1 = _t0
-i_v1 = 19241027
-_t1 = n_v1 Mod 4
-_t2 = _t1 eq 0
-IfNot _t2 goto b2
-main:
+begin_v1 = _t0
+_t1 = Input()
+end_v1 = _t1
+i_v1 = begin_v1
+_t2 = i_v1 lt end_v1
+IfNot _t2 goto b3
 b1:
-Output i_v1
+_t3 = end_v1 Sub begin_v1
+_t4 = _t3 Div 3
+_t5 = begin_v1 Add _t4
+_t6 = i_v1 le _t5
+IfNot _t6 goto b5
+b4:
+_t7 = i_v1 Mod 4
+_t8 = _t7 eq 0
+IfNot _t8 goto b8
+b7:
 Output str0
+_t9 = cnt_v0 Add -1
+cnt_v0 = _t9
 SetAllSpare
-main:
+b8:
+Jmp b6
+b5:
+_t10 = end_v1 Sub begin_v1
+_t11 = _t10 Div 2
+_t12 = begin_v1 Add _t11
+_t13 = i_v1 lt _t12
+IfNot _t13 goto b10
+b9:
+_t14 = i_v1 Mod 6
+_t15 = _t14 eq 0
+IfNot _t15 goto b13
+b12:
+Output str1
+_t16 = cnt_v0 Add -1
+cnt_v0 = _t16
+SetAllSpare
+b13:
+Jmp b11
+b10:
+_t17 = end_v1 Sub begin_v1
+_t18 = _t17 Mul 3
+_t19 = _t18 Div 4
+_t20 = begin_v1 Add _t19
+_t21 = i_v1 ge _t20
+IfNot _t21 goto b15
+b14:
+_t22 = i_v1 Mod 8
+_t23 = _t22 eq 0
+IfNot _t23 goto b18
+b17:
+Output str2
+_t24 = cnt_v0 Add -1
+cnt_v0 = _t24
+SetAllSpare
+b18:
+Jmp b16
+b15:
+_t25 = end_v1 Sub begin_v1
+_t26 = _t25 Mul 5
+_t27 = _t26 Div 6
+_t28 = begin_v1 Add _t27
+_t29 = i_v1 gt _t28
+IfNot _t29 goto b20
+b19:
+_t30 = i_v1 Mod 10
+_t31 = _t30 eq 0
+IfNot _t31 goto b22
+b21:
+Output str3
+SetAllSpare
+b22:
+SetAllSpare
+b20:
+SetAllSpare
+b16:
+SetAllSpare
+b11:
+SetAllSpare
+b6:
+_t32 = i_v1 Add 1
+i_v1 = _t32
+SetAllSpare
 b2:
+_t33 = i_v1 lt end_v1
+If _t33 goto b1
+b3:
 Ret 0
 

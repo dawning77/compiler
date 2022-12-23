@@ -8,6 +8,8 @@ import middle.ir.*;
 import middle.operand.*;
 import middle.operand.symbol.*;
 
+import java.util.*;
+
 public class Br extends ICode{
 	public Operand opd0;
 	public Operand opd1;
@@ -24,6 +26,18 @@ public class Br extends ICode{
 		this.bb = bb;
 		if(opd0 instanceof Symbol) use.add((Symbol)opd0);
 	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){
+		if(opd0 instanceof Symbol && opd0.equals(oldUse)){
+			opd0 = newUse;
+			use = new HashSet<>();
+			if(opd0 instanceof Symbol) use.add((Symbol)opd0);
+		}
+	}
+
+	@Override
+	public void changeDef(Symbol newDef){ }
 
 	@Override
 	public String toString(){
@@ -43,11 +57,12 @@ public class Br extends ICode{
 			}
 			else if(opd0 instanceof Var){
 				Reg reg = regManager.getUse((Var)opd0);
-				if(((Var)opd0).type.equals(Symbol.Type.tmp)) regManager.setAllSpareExcept(reg);
+				if(((Var)opd0).type.equals(Symbol.Type.tmp) && !regManager.globalRegManager.allocGlobal((Var)opd0))
+					regManager.setAllSpareExcept(reg);
 				else regManager.setAllTmpRegSpare();
 				rel = inv? Rel.eq: Rel.eq.inverse();
 				instrs.add(new backend.mips.instr.pseudo.Br(reg, Reg.$zero, rel, bb.toString()));
-				if(((Var)opd0).type.equals(Symbol.Type.tmp)){
+				if(((Var)opd0).type.equals(Symbol.Type.tmp) && !regManager.globalRegManager.allocGlobal((Var)opd0)){
 					regManager.setSpareNoStore(reg);
 					regManager.tmpRegManager.initSpare();
 				}

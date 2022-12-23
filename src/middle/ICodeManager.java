@@ -46,8 +46,8 @@ public class ICodeManager{
 	private FuncScope curFunc;
 	private SymbolTable curST;
 
-	private final Stack<BasicBlock> loopFollows;
 	private final Stack<BasicBlock> loopConds;
+	private final Stack<BasicBlock> loopFollows;
 
 	private final Calculator calc;
 
@@ -69,8 +69,8 @@ public class ICodeManager{
 		curBlock = null;
 		curFunc = null;
 		curST = new SymbolTable(tableCnt++, null);
-		loopFollows = new Stack<>();
 		loopConds = new Stack<>();
+		loopFollows = new Stack<>();
 		calc = new Calculator();
 		valMap = new HashMap<>();
 	}
@@ -813,17 +813,20 @@ public class ICodeManager{
 	}
 
 	private void analyseWhile(Stmt s){
+		BasicBlock loopBefore = curBlock;
 		BasicBlock loopBody = genNewBlock();
 		BasicBlock loopCond = genNewBlock();
 		BasicBlock loopFollow = genNewBlock();
+		curFunc.loopInfos.add(new LoopInfo(loopBefore, curBlock.iCodes.get(
+				curBlock.iCodes.size() - 1), loopBody, loopCond, loopFollow));
 		analyseCond(s.cond, false, loopBody, loopFollow);
 		changeCurBlock(loopBody);
 		loopConds.push(loopCond);
 		loopFollows.push(loopFollow);
 		analyseStmt(s.stmt1);
 		addICode(new SetAllSpare());
-		loopFollows.pop();
 		loopConds.pop();
+		loopFollows.pop();
 		changeCurBlock(loopCond);
 		analyseCond(s.cond, true, loopBody, loopFollow);
 		changeCurBlock(loopFollow);

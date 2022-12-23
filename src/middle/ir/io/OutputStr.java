@@ -4,6 +4,8 @@ import backend.mips.instr.*;
 import backend.mips.instr.pseudo.*;
 import backend.mips.reg.*;
 import middle.ir.*;
+import middle.operand.*;
+import middle.operand.symbol.*;
 
 public class OutputStr extends ICode{
 	public int strId;
@@ -12,6 +14,12 @@ public class OutputStr extends ICode{
 		super();
 		this.strId = strId;
 	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){ }
+
+	@Override
+	public void changeDef(Symbol newDef){ }
 
 	@Override
 	public String toString(){ return "Output str" + strId; }

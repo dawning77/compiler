@@ -49,15 +49,9 @@ public class RegManager{
 		else return tmpRegManager.getUse(sym);
 	}
 
-	public void setAllSpareExcept(Reg reg){
-		if(GLOBAL_REG.contains(reg)) return;
-		tmpRegManager.setAllSpareExcept(reg);
-	}
+	public void setAllSpareExcept(Reg reg){ tmpRegManager.setAllSpareExcept(reg); }
 
-	public void setSpareNoStore(Reg reg){
-		if(GLOBAL_REG.contains(reg)) return;
-		tmpRegManager.setAllSpareExcept(reg);
-	}
+	public void setSpareNoStore(Reg reg){ tmpRegManager.setSpareNoStore(reg); }
 
 	public void setAllTmpRegSpare(){ tmpRegManager.setAllSpare(); }
 

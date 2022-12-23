@@ -17,6 +17,13 @@ public class Compare extends Binary{
 	}
 
 	@Override
+	public Integer calc(){
+		if(opd0 instanceof Imm && opd1 instanceof Imm)
+			return rel.satisfied(((Imm)opd0).val, ((Imm)opd1).val)? 1: 0;
+		else return null;
+	}
+
+	@Override
 	public String toString(){ return res + " = " + opd0 + " " + rel + " " + opd1; }
 
 	@Override

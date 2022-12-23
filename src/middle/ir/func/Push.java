@@ -19,6 +19,26 @@ public class Push extends ICode{
 	public Push(ArrayList<Operand> params){
 		super();
 		this.params = params;
+		genUseDef();
+	}
+
+	@Override
+	public void changeUse(Symbol oldUse, Operand newUse){
+		for(Operand p: params){
+			if(p instanceof Var && p.equals(oldUse)){
+				params.set(params.indexOf(p), newUse);
+			}
+			else if(p instanceof SubMat){
+				if(((SubMat)p).idx instanceof Var && ((SubMat)p).idx.equals(oldUse)){
+					((SubMat)p).idx = newUse;
+				}
+			}
+		}
+		genUseDef();
+	}
+
+	private void genUseDef(){
+		use = new HashSet<>();
 		for(Operand p: params){
 			if(p instanceof Var) use.add((Symbol)p);
 			else if((p instanceof Arr && !(p instanceof SubMat)) ||
@@ -33,7 +53,10 @@ public class Push extends ICode{
 	}
 
 	@Override
-	public String toString(){ return "Push "+ params.toString(); }
+	public void changeDef(Symbol newDef){ }
+
+	@Override
+	public String toString(){ return "Push " + params.toString(); }
 
 	@Override
 	public void genInstr(RegManager regManager){
